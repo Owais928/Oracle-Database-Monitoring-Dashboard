@@ -1,0 +1,333 @@
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-tools"></i> Database Administration Tools
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <i class="bi bi-people fs-1 text-primary mb-3"></i>
+                                <h5>Session Management</h5>
+                                <p class="text-muted">View and manage database sessions</p>
+                                <a href="/sessions" class="btn btn-outline-primary">Go to Sessions</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <i class="bi bi-hdd fs-1 text-success mb-3"></i>
+                                <h5>Storage Management</h5>
+                                <p class="text-muted">Monitor and manage tablespaces</p>
+                                <a href="/storage" class="btn btn-outline-success">Go to Storage</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <i class="bi bi-graph-up fs-1 text-warning mb-3"></i>
+                                <h5>Performance</h5>
+                                <p class="text-muted">Performance metrics and analysis</p>
+                                <a href="/performance" class="btn btn-outline-warning">Go to Performance</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <i class="bi bi-code-slash fs-1 text-info mb-3"></i>
+                                <h5>SQL Executor</h5>
+                                <p class="text-muted">Execute and analyze SQL queries</p>
+                                <a href="/sql" class="btn btn-outline-info">Go to SQL</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-gear"></i> Database Operations
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-secondary" onclick="flushBufferCache()">
+                        <i class="bi bi-eraser"></i> Flush Buffer Cache
+                    </button>
+                    <button class="btn btn-secondary" onclick="flushSharedPool()">
+                        <i class="bi bi-eraser"></i> Flush Shared Pool
+                    </button>
+                    <button class="btn btn-info" onclick="switchLogfile()">
+                        <i class="bi bi-arrow-repeat"></i> Switch Logfile
+                    </button>
+                    <button class="btn btn-warning" onclick="forceCheckpoint()">
+                        <i class="bi bi-check-circle"></i> Force Checkpoint
+                    </button>
+                    <button class="btn btn-success" onclick="showBackupModal()">
+                        <i class="bi bi-download"></i> Backup Operations
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-info-circle"></i> System Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="databaseInfo">
+                    <div class="text-center py-3">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <span class="text-muted ms-2">Loading database information...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Backup Modal -->
+<div class="modal fade" id="backupModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Backup Operations</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> 
+                    Backup operations require proper privileges and configuration.
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary" onclick="createBackup()" id="backupBtn">
+                        <i class="bi bi-save"></i> Create Full Backup
+                    </button>
+                    <button class="btn btn-success" onclick="exportSchema()" id="exportBtn">
+                        <i class="bi bi-download"></i> Export Schema
+                    </button>
+                    <button class="btn btn-warning" onclick="checkBackupStatus()" id="statusBtn">
+                        <i class="bi bi-clock-history"></i> Check Backup Status
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function flushBufferCache() {
+    if (!confirm('Flush buffer cache? This may impact performance temporarily.')) return;
+    
+    executeDBAOperation('ALTER SYSTEM FLUSH BUFFER_CACHE', 'Buffer cache flushed successfully');
+}
+
+function flushSharedPool() {
+    if (!confirm('Flush shared pool? This may impact performance temporarily.')) return;
+    
+    executeDBAOperation('ALTER SYSTEM FLUSH SHARED_POOL', 'Shared pool flushed successfully');
+}
+
+function switchLogfile() {
+    executeDBAOperation('ALTER SYSTEM SWITCH LOGFILE', 'Logfile switched successfully');
+}
+
+function forceCheckpoint() {
+    executeDBAOperation('ALTER SYSTEM CHECKPOINT', 'Checkpoint completed successfully');
+}
+
+function showBackupModal() {
+    new bootstrap.Modal(document.getElementById('backupModal')).show();
+}
+
+function createBackup() {
+    if (!confirm('Create full database backup? This may take a while.')) return;
+    
+    showAlert('Initiating backup operation...', 'info');
+    
+    fetch('/api/dba/create-backup', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+    })
+    .then(response => response.json())
+    .then(data => {
+        bootstrap.Modal.getInstance(document.getElementById('backupModal')).hide();
+        if (data.success) {
+            showAlert(`Backup completed successfully!\n` +
+                `Type: ${data.backup.backupType}\n` +
+                `File: ${data.backup.filename}\n` +
+                `Location: ${data.backup.destination}\n` +
+                `Size: ${(data.backup.fileSize / 1024).toFixed(2)} KB`, 'success');
+        } else {
+            showAlert(`Backup failed: ${data.message}`, 'danger');
+        }
+    })
+    .catch(error => {
+        bootstrap.Modal.getInstance(document.getElementById('backupModal')).hide();
+        showAlert(`Error: ${error.message}`, 'danger');
+    });
+}
+
+function exportSchema() {
+    const schema = prompt('Enter schema name to export:');
+    if (!schema) return;
+    
+    showAlert('Initiating schema export...', 'info');
+    
+    fetch('/api/dba/export-schema', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ schema: schema })
+    })
+    .then(response => response.json())
+    .then(data => {
+        bootstrap.Modal.getInstance(document.getElementById('backupModal')).hide();
+        if (data.success) {
+            let alertMsg = `Complete Schema Backup Created Successfully!\n` +
+                `Type: ${data.export.exportType}\n` +
+                `Schema: ${data.export.schema}\n` +
+                `File: ${data.export.filename}\n` +
+                `Location: ${data.export.destination}\n` +
+                `Size: ${(data.export.fileSize / 1024).toFixed(2)} KB`;
+            
+            if (data.export.objectsIncluded && data.export.objectsIncluded !== 'N/A') {
+                alertMsg += `\nObjects Exported: ${data.export.objectsIncluded}`;
+            }
+            
+            showAlert(alertMsg, 'success');
+        } else {
+            showAlert(`Export failed: ${data.message}`, 'danger');
+        }
+    })
+    .catch(error => {
+        bootstrap.Modal.getInstance(document.getElementById('backupModal')).hide();
+        showAlert(`Error: ${error.message}`, 'danger');
+    });
+}
+
+function checkBackupStatus() {
+    showAlert('Retrieving backup status...', 'info');
+    
+    fetch('/api/dba/backup-status', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        bootstrap.Modal.getInstance(document.getElementById('backupModal')).hide();
+        if (data.success) {
+            if (data.backups && data.backups.length > 0) {
+                let backupInfo = 'Recent Backups:\n\n';
+                data.backups.slice(0, 5).forEach((backup, index) => {
+                    backupInfo += `${index + 1}. ${backup.STATUS || 'N/A'}\n` +
+                        `   Start: ${backup.START_TIME || 'N/A'}\n` +
+                        `   Duration: ${backup.DURATION_MINUTES || 'N/A'} minutes\n\n`;
+                });
+                showAlert(backupInfo, 'info');
+            } else {
+                showAlert('No recent backup history found', 'info');
+            }
+        } else {
+            showAlert(`Failed to retrieve backup status: ${data.message}`, 'warning');
+        }
+    })
+    .catch(error => {
+        bootstrap.Modal.getInstance(document.getElementById('backupModal')).hide();
+        showAlert(`Error: ${error.message}`, 'danger');
+    });
+}
+
+function executeDBAOperation(sql, successMessage) {
+    fetch('/api/dba/execute-sql', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ sql: sql })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(successMessage, 'success');
+        } else {
+            showAlert(`Error: ${data.message}`, 'danger');
+        }
+    })
+    .catch(error => {
+        showAlert(`Network error: ${error.message}`, 'danger');
+    });
+}
+
+function loadDatabaseInfo() {
+    fetch('/api/dashboard/metrics')
+        .then(response => response.json())
+        .then(data => {
+            // Check if data structure is correct - metrics endpoint returns { success, data: metrics }
+            if (data.success && data.data && data.data.performance && data.data.performance.instanceInfo) {
+                displayDatabaseInfo(data.data.performance.instanceInfo);
+            } else if (data.success && data.performance && data.performance.instanceInfo) {
+                // Fallback for different response structure
+                displayDatabaseInfo(data.performance.instanceInfo);
+            } else {
+                const container = document.getElementById('databaseInfo');
+                container.innerHTML = '<div class="alert alert-warning">Unable to load database information</div>';
+            }
+        })
+        .catch(error => {
+            const container = document.getElementById('databaseInfo');
+            container.innerHTML = `<div class="alert alert-danger">Error loading database info: ${error.message}</div>`;
+        });
+}
+
+function displayDatabaseInfo(info) {
+    const container = document.getElementById('databaseInfo');
+    
+    if (!info) {
+        container.innerHTML = '<div class="alert alert-warning">No database information available</div>';
+        return;
+    }
+    
+    container.innerHTML = `
+        <table class="table table-sm">
+            <tr><th>Instance Name:</th><td>${info.INSTANCE_NAME || 'N/A'}</td></tr>
+            <tr><th>Host Name:</th><td>${info.HOST_NAME || 'N/A'}</td></tr>
+            <tr><th>Version:</th><td>${info.VERSION || 'N/A'}</td></tr>
+            <tr><th>Status:</th><td><span class="badge bg-success">${info.STATUS || 'N/A'}</span></td></tr>
+            <tr><th>Startup Time:</th><td>${info.STARTUP_TIME || 'N/A'}</td></tr>
+            <tr><th>Database Status:</th><td><span class="badge bg-info">${info.DATABASE_STATUS || 'N/A'}</span></td></tr>
+        </table>
+    `;
+}
+
+document.addEventListener('DOMContentLoaded', loadDatabaseInfo);
+</script>

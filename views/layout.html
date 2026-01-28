@@ -1,0 +1,182 @@
+<!-- views/layout.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - Oracle Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.3.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.2/dist/socket.io.min.js"></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-database"></i> Oracle Dashboard
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link <%= currentPage === 'dashboard' ? 'active' : '' %>" href="/">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <%= currentPage === 'sessions' ? 'active' : '' %>" href="/sessions">
+                            <i class="bi bi-people"></i> Sessions
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <%= currentPage === 'performance' ? 'active' : '' %>" href="/performance">
+                            <i class="bi bi-graph-up"></i> Performance
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <%= currentPage === 'storage' ? 'active' : '' %>" href="/storage">
+                            <i class="bi bi-hdd"></i> Storage
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <%= currentPage === 'sql' ? 'active' : '' %>" href="/sql">
+                            <i class="bi bi-code-slash"></i> SQL Executor
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <%= currentPage === 'dba' ? 'active' : '' %>" href="/dba">
+                            <i class="bi bi-tools"></i> DBA Tools
+                        </a>
+                    </li>
+                </ul>
+                <div class="navbar-text">
+                    <span class="me-3">
+                        <i class="bi bi-person-circle"></i> <%= user.username %>
+                    </span>
+                    <a href="/logout" class="btn btn-sm btn-outline-light">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-3">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2><%= title %></h2>
+                    <div class="refresh-controls">
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-primary" onclick="requestImmediateUpdate()">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh Now
+                            </button>
+                            <select class="form-select form-select-sm" id="refreshInterval" style="width: auto;">
+                                <option value="10000">10 seconds</option>
+                                <option value="30000" selected>30 seconds</option>
+                                <option value="60000">1 minute</option>
+                                <option value="300000">5 minutes</option>
+                                <option value="0">Manual</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="alerts-container"></div>
+                
+                <% if (typeof error !== 'undefined') { %>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <%= error %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                <% } %>
+                
+                <%- body %>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer mt-5 py-3 bg-light">
+        <div class="container text-center">
+            <span class="text-muted">
+                Oracle Dashboard v1.0 | Last Update: <span id="last-update">-</span>
+                <span id="connection-status" class="ms-3 badge bg-success">Connected</span>
+            </span>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/dashboard.js"></script>
+    <script src="/js/charts.js"></script>
+    <script src="/js/dba.js"></script>
+    
+    <script>
+        // Initialize Socket.IO
+        const socket = io();
+        let lastUpdateTime = null;
+        
+        socket.on('connect', () => {
+            document.getElementById('connection-status').className = 'ms-3 badge bg-success';
+            document.getElementById('connection-status').textContent = 'Connected';
+        });
+        
+        socket.on('disconnect', () => {
+            document.getElementById('connection-status').className = 'ms-3 badge bg-danger';
+            document.getElementById('connection-status').textContent = 'Disconnected';
+        });
+        
+        socket.on('metricsUpdate', (data) => {
+            lastUpdateTime = new Date(data.timestamp);
+            document.getElementById('last-update').textContent = 
+                lastUpdateTime.toLocaleTimeString();
+            
+            // Update charts and data
+            if (typeof updateCharts === 'function') {
+                updateCharts(data);
+            }
+        });
+        
+        socket.on('error', (error) => {
+            showAlert(error.message, 'danger');
+        });
+        
+        function requestImmediateUpdate() {
+            socket.emit('requestUpdate');
+        }
+        
+        // Set refresh interval
+        document.getElementById('refreshInterval').addEventListener('change', function() {
+            const interval = parseInt(this.value);
+            socket.emit('setRefreshInterval', interval);
+        });
+        
+        function showAlert(message, type = 'info', duration = 5000) {
+            const container = document.getElementById('alerts-container');
+            const alertId = 'alert-' + Date.now();
+            
+            const alertHTML = `
+                <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('afterbegin', alertHTML);
+            
+            if (duration > 0) {
+                setTimeout(() => {
+                    const alert = document.getElementById(alertId);
+                    if (alert) {
+                        alert.remove();
+                    }
+                }, duration);
+            }
+        }
+    </script>
+</body>
+</html>

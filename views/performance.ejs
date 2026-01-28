@@ -1,0 +1,718 @@
+<!-- views/performance.ejs -->
+
+<div class="row">
+    <!-- Performance Overview -->
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-graph-up"></i> Performance Overview
+                </h5>
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-outline-primary" onclick="refreshPerformance()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                    <select class="form-select form-select-sm" id="timeRange" style="width: auto;">
+                        <option value="5">Last 5 minutes</option>
+                        <option value="15" selected>Last 15 minutes</option>
+                        <option value="30">Last 30 minutes</option>
+                        <option value="60">Last 1 hour</option>
+                        <option value="180">Last 3 hours</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">CPU Usage</h6>
+                                <h2 id="cpu-usage">0%</h2>
+                                <div class="small">Current</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">Memory</h6>
+                                <h2 id="memory-usage">0%</h2>
+                                <div class="small">Current</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">I/O Wait</h6>
+                                <h2 id="io-wait">0%</h2>
+                                <div class="small">Current</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">Buffer Hit</h6>
+                                <h2 id="buffer-hit">0%</h2>
+                                <div class="small">Ratio</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
+                        <div class="card bg-danger text-white">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">Redo Rate</h6>
+                                <h2 id="redo-rate">0</h2>
+                                <div class="small">KB/sec</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
+                        <div class="card bg-secondary text-white">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">Executions</h6>
+                                <h2 id="executions">0</h2>
+                                <div class="small">Per Second</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- CPU & Memory Charts -->
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-cpu"></i> CPU & Memory Usage
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="cpuMemoryChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-hdd"></i> I/O Statistics
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="ioChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Throughput Charts -->
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-lightning"></i> Transactions per Second
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="tpsChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-database"></i> Buffer Cache Hit Ratio
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="bufferChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Wait Events -->
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-clock-history"></i> Top Wait Events
+                </h5>
+                <button class="btn btn-sm btn-outline-primary" onclick="loadWaitEvents()">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="waitEventsTable">
+                        <thead>
+                            <tr>
+                                <th>Wait Event</th>
+                                <th>Wait Class</th>
+                                <th>Total Waits</th>
+                                <th>Time Waited (s)</th>
+                                <th>Avg Wait (ms)</th>
+                                <th>% of Total</th>
+                                <th>Trend</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Wait events will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- System Metrics -->
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-speedometer2"></i> System Metrics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm" id="systemMetricsTable">
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Value</th>
+                                <th>Unit</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- System metrics will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top SQL by Resource -->
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-code-slash"></i> Top SQL by Resource Usage
+                </h5>
+                <a href="/sql" class="btn btn-sm btn-outline-primary">
+                    SQL Executor <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm" id="topSqlTable">
+                        <thead>
+                            <tr>
+                                <th>SQL ID</th>
+                                <th>Executions</th>
+                                <th>Elapsed Time</th>
+                                <th>CPU Time</th>
+                                <th>Buffer Gets</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Top SQL will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Charts Script -->
+<script src="/js/charts.js"></script>
+<script>
+let performanceCharts = {};
+let performanceData = {
+    timestamps: [],
+    cpu: [],
+    memory: [],
+    io: [],
+    tps: [],
+    bufferHit: []
+};
+
+function initPerformanceCharts() {
+    // CPU & Memory Chart
+    const cpuMemoryCtx = document.getElementById('cpuMemoryChart').getContext('2d');
+    performanceCharts.cpuMemory = new Chart(cpuMemoryCtx, {
+        type: 'line',
+        data: {
+            labels: performanceData.timestamps,
+            datasets: [
+                {
+                    label: 'CPU Usage (%)',
+                    data: performanceData.cpu,
+                    borderColor: 'rgb(255, 99, 132)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Memory Usage (%)',
+                    data: performanceData.memory,
+                    borderColor: 'rgb(54, 162, 235)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Percentage (%)'
+                    }
+                }
+            }
+        }
+    });
+
+    // I/O Chart
+    const ioCtx = document.getElementById('ioChart').getContext('2d');
+    performanceCharts.io = new Chart(ioCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Reads/sec', 'Writes/sec', 'Redo/sec', 'Log Writes'],
+            datasets: [{
+                label: 'I/O Operations',
+                data: [0, 0, 0, 0],
+                backgroundColor: [
+                    'rgb(255, 99, 132)',
+                    'rgb(54, 162, 235)',
+                    'rgb(255, 205, 86)',
+                    'rgb(75, 192, 192)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Operations per Second'
+                    }
+                }
+            }
+        }
+    });
+
+    // TPS Chart
+    const tpsCtx = document.getElementById('tpsChart').getContext('2d');
+    performanceCharts.tps = new Chart(tpsCtx, {
+        type: 'line',
+        data: {
+            labels: performanceData.timestamps,
+            datasets: [{
+                label: 'Transactions/sec',
+                data: performanceData.tps,
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Transactions per Second'
+                    }
+                }
+            }
+        }
+    });
+
+    // Buffer Chart
+    const bufferCtx = document.getElementById('bufferChart').getContext('2d');
+    performanceCharts.buffer = new Chart(bufferCtx, {
+        type: 'line',
+        data: {
+            labels: performanceData.timestamps,
+            datasets: [{
+                label: 'Buffer Hit Ratio (%)',
+                data: performanceData.bufferHit,
+                borderColor: 'rgb(153, 102, 255)',
+                backgroundColor: 'rgba(153, 102, 255, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Hit Ratio (%)'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function refreshPerformance() {
+    fetch('/api/dashboard/metrics/performance')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updatePerformanceMetrics(data.data);
+            }
+        })
+        .catch(error => {
+            console.error('Error refreshing performance:', error);
+        });
+}
+
+function updatePerformanceMetrics(data) {
+    const timestamp = new Date(data.timestamp).toLocaleTimeString();
+    
+    // Add data to arrays
+    performanceData.timestamps.push(timestamp);
+    performanceData.cpu.push(Math.random() * 100); // Replace with actual data
+    performanceData.memory.push(30 + Math.random() * 50); // Replace with actual data
+    performanceData.tps.push(Math.random() * 100); // Replace with actual data
+    performanceData.bufferHit.push(80 + Math.random() * 20); // Replace with actual data
+    
+    // Keep only last 20 data points
+    if (performanceData.timestamps.length > 20) {
+        performanceData.timestamps.shift();
+        performanceData.cpu.shift();
+        performanceData.memory.shift();
+        performanceData.tps.shift();
+        performanceData.bufferHit.shift();
+    }
+    
+    // Update charts
+    if (performanceCharts.cpuMemory) {
+        performanceCharts.cpuMemory.data.labels = performanceData.timestamps;
+        performanceCharts.cpuMemory.data.datasets[0].data = performanceData.cpu;
+        performanceCharts.cpuMemory.data.datasets[1].data = performanceData.memory;
+        performanceCharts.cpuMemory.update();
+    }
+    
+    if (performanceCharts.tps) {
+        performanceCharts.tps.data.labels = performanceData.timestamps;
+        performanceCharts.tps.data.datasets[0].data = performanceData.tps;
+        performanceCharts.tps.update();
+    }
+    
+    if (performanceCharts.buffer) {
+        performanceCharts.buffer.data.labels = performanceData.timestamps;
+        performanceCharts.buffer.data.datasets[0].data = performanceData.bufferHit;
+        performanceCharts.buffer.update();
+    }
+    
+    // Update metric cards
+    updateMetricCards(data);
+    
+    // Update wait events table
+    updateWaitEventsTable(data.waitStats);
+    
+    // Update system metrics table
+    updateSystemMetricsTable(data.systemStats);
+    
+    // Update top SQL table
+    updateTopSqlTable(data.topSQL || []);
+}
+
+function updateMetricCards(data) {
+    // Update individual metric cards
+    document.getElementById('cpu-usage').textContent = 
+        `${Math.round(Math.random() * 100)}%`; // Replace with actual data
+    
+    document.getElementById('memory-usage').textContent = 
+        `${Math.round(30 + Math.random() * 50)}%`; // Replace with actual data
+    
+    document.getElementById('io-wait').textContent = 
+        `${Math.round(Math.random() * 30)}%`; // Replace with actual data
+    
+    document.getElementById('buffer-hit').textContent = 
+        `${Math.round(80 + Math.random() * 20)}%`; // Replace with actual data
+    
+    document.getElementById('redo-rate').textContent = 
+        Math.round(Math.random() * 1000); // Replace with actual data
+    
+    document.getElementById('executions').textContent = 
+        Math.round(Math.random() * 100); // Replace with actual data
+}
+
+function loadWaitEvents() {
+    fetch('/api/dashboard/metrics/wait-events')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateWaitEventsTable(data.data);
+            }
+        });
+}
+
+function updateWaitEventsTable(waitEvents) {
+    const tbody = document.querySelector('#waitEventsTable tbody');
+    if (!tbody || !waitEvents) return;
+    
+    let html = '';
+    waitEvents.forEach(event => {
+        const percentage = (event.TIME_WAITED_SECONDS / 
+            waitEvents.reduce((sum, e) => sum + e.TIME_WAITED_SECONDS, 0) * 100) || 0;
+        
+        html += `
+            <tr>
+                <td><strong>${event.EVENT}</strong></td>
+                <td>
+                    <span class="badge bg-${getWaitClassColor(event.WAIT_CLASS)}">
+                        ${event.WAIT_CLASS || 'N/A'}
+                    </span>
+                </td>
+                <td>${event.TOTAL_WAITS?.toLocaleString() || '0'}</td>
+                <td>${event.TIME_WAITED_SECONDS?.toFixed(2) || '0'}</td>
+                <td>${event.AVERAGE_WAIT_SECONDS ? (event.AVERAGE_WAIT_SECONDS * 1000).toFixed(2) : '0'}</td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="progress flex-grow-1" style="height: 10px;">
+                            <div class="progress-bar bg-${percentage > 50 ? 'danger' : 
+                                                         percentage > 20 ? 'warning' : 'info'}" 
+                                 style="width: ${percentage}%"></div>
+                        </div>
+                        <span class="ms-2">${percentage.toFixed(1)}%</span>
+                    </div>
+                </td>
+                <td>
+                    <span class="text-${Math.random() > 0.5 ? 'success' : 'danger'}">
+                        <i class="bi bi-arrow-${Math.random() > 0.5 ? 'up' : 'down'}"></i>
+                    </span>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html || '<tr><td colspan="7" class="text-center">No wait events data</td></tr>';
+}
+
+function getWaitClassColor(waitClass) {
+    const colors = {
+        'User I/O': 'primary',
+        'System I/O': 'info',
+        'Concurrency': 'warning',
+        'Commit': 'success',
+        'Application': 'secondary',
+        'Configuration': 'dark',
+        'Administrative': 'light',
+        'Network': 'primary',
+        'Queueing': 'warning',
+        'Scheduler': 'info',
+        'Other': 'secondary'
+    };
+    return colors[waitClass] || 'secondary';
+}
+
+function updateSystemMetricsTable(metrics) {
+    const tbody = document.querySelector('#systemMetricsTable tbody');
+    if (!tbody || !metrics) return;
+    
+    let html = '';
+    metrics.forEach(metric => {
+        const status = getMetricStatus(metric.METRIC_NAME, metric.VALUE);
+        
+        html += `
+            <tr>
+                <td>${metric.METRIC_NAME}</td>
+                <td>${formatMetricValue(metric.VALUE, metric.METRIC_UNIT)}</td>
+                <td>${metric.METRIC_UNIT || ''}</td>
+                <td>
+                    <span class="badge bg-${status.color}">
+                        ${status.text}
+                    </span>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html || '<tr><td colspan="4" class="text-center">No system metrics</td></tr>';
+}
+
+function formatMetricValue(value, unit) {
+    if (!value) return '0';
+    
+    if (unit === 'CentiSeconds Per Second') {
+        return (value / 100).toFixed(2) + ' s';
+    } else if (unit === 'Per Second') {
+        return Math.round(value).toLocaleString() + '/s';
+    } else if (unit === 'Bytes Per Second') {
+        return formatBytes(value) + '/s';
+    }
+    
+    return Math.round(value).toLocaleString();
+}
+
+function formatBytes(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function getMetricStatus(metricName, value) {
+    // Define thresholds for different metrics
+    const thresholds = {
+        'Database CPU Time Ratio': { warning: 80, critical: 90 },
+        'Database Wait Time Ratio': { warning: 50, critical: 70 },
+        'Physical Reads Per Sec': { warning: 1000, critical: 5000 },
+        'Physical Writes Per Sec': { warning: 500, critical: 2000 },
+        'Redo Generated Per Sec': { warning: 1048576, critical: 5242880 } // 1MB, 5MB
+    };
+    
+    const threshold = thresholds[metricName];
+    if (!threshold) return { color: 'success', text: 'Normal' };
+    
+    if (value >= threshold.critical) {
+        return { color: 'danger', text: 'Critical' };
+    } else if (value >= threshold.warning) {
+        return { color: 'warning', text: 'Warning' };
+    }
+    
+    return { color: 'success', text: 'Normal' };
+}
+
+function updateTopSqlTable(sqlList) {
+    const tbody = document.querySelector('#topSqlTable tbody');
+    if (!tbody) return;
+    
+    let html = '';
+    sqlList.slice(0, 5).forEach(sql => {
+        html += `
+            <tr>
+                <td>
+                    <code class="small">${sql.SQL_ID || 'N/A'}</code>
+                </td>
+                <td>${sql.EXECUTIONS?.toLocaleString() || '0'}</td>
+                <td>${sql.ELAPSED_TIME_SECONDS?.toFixed(2) || '0'}s</td>
+                <td>${sql.CPU_TIME_SECONDS?.toFixed(2) || '0'}s</td>
+                <td>${sql.BUFFER_GETS?.toLocaleString() || '0'}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-info" 
+                            onclick="showSqlDetails('${sql.SQL_ID}')">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html || '<tr><td colspan="6" class="text-center">No SQL data</td></tr>';
+}
+
+function showSqlDetails(sqlId) {
+    fetch(`/api/dashboard/sql/${sqlId}/details`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const modal = new bootstrap.Modal(document.getElementById('sqlDetailsModal'));
+                document.getElementById('sqlDetailsContent').innerHTML = `
+                    <h5>SQL ID: ${sqlId}</h5>
+                    <pre class="bg-light p-3"><code>${data.data.SQL_FULLTEXT || data.data.SQL_TEXT}</code></pre>
+                    <table class="table table-sm">
+                        ${Object.entries(data.data).filter(([key]) => key !== 'SQL_FULLTEXT' && key !== 'SQL_TEXT').map(([key, value]) => `
+                            <tr>
+                                <th>${key}:</th>
+                                <td>${value}</td>
+                            </tr>
+                        `).join('')}
+                    </table>
+                `;
+                modal.show();
+            }
+        });
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+    initPerformanceCharts();
+    refreshPerformance();
+    loadWaitEvents();
+    
+    // Auto-refresh every 30 seconds
+    setInterval(refreshPerformance, 30000);
+    
+    // Time range selector
+    document.getElementById('timeRange').addEventListener('change', function() {
+        const minutes = parseInt(this.value);
+        // Update charts with new time range
+        refreshPerformance();
+    });
+});
+</script>
+
+<!-- SQL Details Modal -->
+<div class="modal fade" id="sqlDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">SQL Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="sqlDetailsContent">
+                <!-- SQL details will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>

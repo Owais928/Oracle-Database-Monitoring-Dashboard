@@ -1,0 +1,1716 @@
+<!-- views/sessions.html -->
+<%- include('layout', { 
+    title: 'Session Management',
+    currentPage: 'sessions',
+    user: user 
+}); %>
+
+<div class="row">
+    <!-- Session Overview -->
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-people"></i> Active Sessions Overview
+                </h5>
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-outline-primary" onclick="refreshSessions()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="killSelectedSessions()" id="killSessionsBtn" disabled>
+                        <i class="bi bi-x-circle"></i> Kill Selected
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning" onclick="disconnectSelectedSessions()" id="disconnectSessionsBtn" disabled>
+                        <i class="bi bi-plug"></i> Disconnect
+                    </button>
+                    <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#sessionFilterModal">
+                        <i class="bi bi-funnel"></i> Filter
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">Total Sessions</h6>
+                                <h2 id="total-sessions">0</h2>
+                                <div class="small">All Sessions</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
+                        <div class="card bg-danger text-white">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">Active</h6>
+                                <h2 id="active-sessions">0</h2>
+                                <div class="small">Currently Active</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">User</h6>
+                                <h2 id="user-sessions">0</h2>
+                                <div class="small">User Sessions</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">Long Running</h6>
+                                <h2 id="long-running-sessions">0</h2>
+                                <div class="small">> 1 Hour</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">Blocking</h6>
+                                <h2 id="blocking-sessions">0</h2>
+                                <div class="small">Blocking Others</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
+                        <div class="card bg-secondary text-white">
+                            <div class="card-body text-center">
+                                <h6 class="card-title">Background</h6>
+                                <h2 id="background-sessions">0</h2>
+                                <div class="small">System Sessions</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Session Search & Filter -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-search"></i> Session Search & Filter
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="form-control" id="filterUsername" placeholder="Enter username...">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Program</label>
+                        <input type="text" class="form-control" id="filterProgram" placeholder="Enter program...">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Machine</label>
+                        <input type="text" class="form-control" id="filterMachine" placeholder="Enter machine...">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" id="filterStatus">
+                            <option value="">All Status</option>
+                            <option value="ACTIVE">Active</option>
+                            <option value="INACTIVE">Inactive</option>
+                            <option value="KILLED">Killed</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Last Call (minutes)</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="filterLastCallMin" placeholder="Min" min="0">
+                            <span class="input-group-text">to</span>
+                            <input type="number" class="form-control" id="filterLastCallMax" placeholder="Max" min="0">
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Event</label>
+                        <input type="text" class="form-control" id="filterEvent" placeholder="Enter wait event...">
+                    </div>
+                    <div class="col-md-4 mb-3 d-flex align-items-end">
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-primary" onclick="applyFilters()">
+                                <i class="bi bi-filter"></i> Apply Filters
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="clearFilters()">
+                                <i class="bi bi-x-circle"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Sessions Table -->
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-table"></i> Active Sessions
+                </h5>
+                <div class="d-flex align-items-center">
+                    <span class="me-3 small text-muted" id="session-count">0 sessions</span>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="autoRefreshSwitch" checked>
+                        <label class="form-check-label" for="autoRefreshSwitch">Auto Refresh</label>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm" id="sessionsTable">
+                        <thead>
+                            <tr>
+                                <th width="40">
+                                    <input type="checkbox" id="selectAllSessions" onchange="toggleSelectAll(this)">
+                                </th>
+                                <th>SID</th>
+                                <th>Username</th>
+                                <th>Status</th>
+                                <th>Program</th>
+                                <th>Machine</th>
+                                <th>Event</th>
+                                <th>Last Call</th>
+                                <th>SQL ID</th>
+                                <th>Blocking</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sessionsTableBody">
+                            <!-- Sessions will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                <nav aria-label="Session pagination" class="mt-3">
+                    <ul class="pagination justify-content-center" id="sessionsPagination">
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" tabindex="-1">Previous</a>
+                        </li>
+                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Session Statistics -->
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-pie-chart"></i> Session Distribution
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="sessionDistributionChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-clock-history"></i> Top Wait Events
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="topWaitEvents" style="max-height: 250px; overflow-y: auto;">
+                    <!-- Wait events will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Long Running Sessions -->
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-hourglass-split"></i> Long Running Sessions (> 1 hour)
+                </h5>
+                <button class="btn btn-sm btn-outline-warning" onclick="showLongRunningSessions()">
+                    <i class="bi bi-exclamation-triangle"></i> View Details
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm" id="longRunningTable">
+                        <thead>
+                            <tr>
+                                <th>SID</th>
+                                <th>Username</th>
+                                <th>Program</th>
+                                <th>Last Call</th>
+                                <th>Event</th>
+                                <th>SQL Text</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Long running sessions will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Blocking Sessions -->
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-lock"></i> Blocking Sessions
+                </h5>
+                <button class="btn btn-sm btn-outline-danger" onclick="showBlockingChain()">
+                    <i class="bi bi-diagram-3"></i> View Block Chain
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-danger" id="blockingTable">
+                        <thead>
+                            <tr>
+                                <th>Blocking SID</th>
+                                <th>Blocked SID</th>
+                                <th>Blocking User</th>
+                                <th>Blocked User</th>
+                                <th>Wait Event</th>
+                                <th>Object Name</th>
+                                <th>Block Time</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Blocking sessions will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+<!-- Session Details Modal -->
+<div class="modal fade" id="sessionDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Session Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="sessionDetailsContent">
+                <!-- Session details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger" id="killSessionBtnModal">
+                    <i class="bi bi-x-circle"></i> Kill Session
+                </button>
+                <button type="button" class="btn btn-warning" id="traceSessionBtnModal">
+                    <i class="bi bi-binoculars"></i> Start Trace
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SQL Details Modal -->
+<div class="modal fade" id="sqlDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">SQL Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="sqlDetailsContent">
+                <!-- SQL details will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Block Chain Modal -->
+<div class="modal fade" id="blockChainModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Blocking Chain</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="blockChainDiagram">
+                    <!-- Block chain diagram will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Trace Session Modal -->
+<div class="modal fade" id="traceSessionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Trace Session</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="traceSessionForm">
+                    <div class="mb-3">
+                        <label for="traceSessionId" class="form-label">Session SID</label>
+                        <input type="text" class="form-control" id="traceSessionId" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="traceLevel" class="form-label">Trace Level</label>
+                        <select class="form-select" id="traceLevel">
+                            <option value="1">Level 1 - Minimal</option>
+                            <option value="4" selected>Level 4 - Standard</option>
+                            <option value="8">Level 8 - Detailed</option>
+                            <option value="12">Level 12 - Maximum</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="traceDuration" class="form-label">Duration (minutes)</label>
+                        <input type="number" class="form-control" id="traceDuration" min="1" max="60" value="5">
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="traceWaits" checked>
+                        <label class="form-check-label" for="traceWaits">
+                            Include Wait Events
+                        </label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="traceBinds" checked>
+                        <label class="form-check-label" for="traceBinds">
+                            Include Bind Variables
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="startTracing()">Start Trace</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Session Filter Modal -->
+<div class="modal fade" id="sessionFilterModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Advanced Session Filters</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="advancedFilterForm">
+                    <div class="mb-3">
+                        <label class="form-label">OS User</label>
+                        <input type="text" class="form-control" id="filterOSUser" placeholder="e.g., oracle, appuser">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Module</label>
+                        <input type="text" class="form-control" id="filterModule" placeholder="e.g., SQL*Plus, TOAD">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Action</label>
+                        <input type="text" class="form-control" id="filterAction" placeholder="e.g., SELECT, UPDATE">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Service Name</label>
+                        <input type="text" class="form-control" id="filterServiceName" placeholder="e.g., ORCLPDB1">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Port</label>
+                        <input type="number" class="form-control" id="filterPort" placeholder="e.g., 1521">
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="filterOnlyUserSessions" checked>
+                        <label class="form-check-label" for="filterOnlyUserSessions">
+                            Show Only User Sessions
+                        </label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="filterWithSQL">
+                        <label class="form-check-label" for="filterWithSQL">
+                            Only Sessions with SQL
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="applyAdvancedFilters()">Apply Filters</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Session Management Script -->
+<script src="/js/charts.js"></script>
+<script>
+// Session Management Variables
+let allSessions = [];
+let filteredSessions = [];
+let selectedSessions = new Set();
+let sessionChart = null;
+let currentPage = 1;
+let pageSize = 20;
+let autoRefreshEnabled = true;
+let autoRefreshInterval;
+let currentFilters = {};
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initSessionCharts();
+    refreshSessions();
+    startAutoRefresh();
+    
+    // Setup event listeners
+    setupEventListeners();
+});
+
+function setupEventListeners() {
+    // Auto refresh toggle
+    document.getElementById('autoRefreshSwitch').addEventListener('change', function() {
+        autoRefreshEnabled = this.checked;
+        if (autoRefreshEnabled) {
+            startAutoRefresh();
+        } else {
+            stopAutoRefresh();
+        }
+    });
+    
+    // Search input events
+    ['filterUsername', 'filterProgram', 'filterMachine', 'filterEvent'].forEach(id => {
+        document.getElementById(id).addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                applyFilters();
+            }
+        });
+    });
+}
+
+function initSessionCharts() {
+    const ctx = document.getElementById('sessionDistributionChart').getContext('2d');
+    sessionChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Active', 'Inactive', 'Background'],
+            datasets: [{
+                data: [0, 0, 0],
+                backgroundColor: [
+                    'rgb(255, 99, 132)',
+                    'rgb(54, 162, 235)',
+                    'rgb(255, 205, 86)'
+                ],
+                borderWidth: 2,
+                borderColor: '#fff',
+                hoverOffset: 15
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.raw || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = Math.round((value / total) * 100);
+                            return `${label}: ${value} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function refreshSessions() {
+    showLoading();
+    
+    fetch('/api/dashboard/metrics/sessions')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                allSessions = data.data;
+                applyFilters(); // Apply any existing filters
+                updateSessionMetrics(data.data);
+                updateSessionChart(data.data);
+                updateTopWaitEvents(data.data);
+                updateLongRunningSessions(data.data);
+                updateBlockingSessions(data.data);
+                hideLoading();
+            } else {
+                showError('Failed to load sessions');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading sessions:', error);
+            showError('Connection error. Please check your network.');
+            hideLoading();
+        });
+}
+
+function applyFilters() {
+    // Get filter values
+    currentFilters = {
+        username: document.getElementById('filterUsername').value.toLowerCase(),
+        program: document.getElementById('filterProgram').value.toLowerCase(),
+        machine: document.getElementById('filterMachine').value.toLowerCase(),
+        status: document.getElementById('filterStatus').value,
+        event: document.getElementById('filterEvent').value.toLowerCase(),
+        lastCallMin: document.getElementById('filterLastCallMin').value,
+        lastCallMax: document.getElementById('filterLastCallMax').value
+    };
+    
+    // Apply advanced filters if set
+    const advancedFilters = getAdvancedFilters();
+    currentFilters = { ...currentFilters, ...advancedFilters };
+    
+    // Filter sessions
+    filteredSessions = allSessions.filter(session => {
+        // Username filter
+        if (currentFilters.username && 
+            (!session.USERNAME || !session.USERNAME.toLowerCase().includes(currentFilters.username))) {
+            return false;
+        }
+        
+        // Program filter
+        if (currentFilters.program && 
+            (!session.PROGRAM || !session.PROGRAM.toLowerCase().includes(currentFilters.program))) {
+            return false;
+        }
+        
+        // Machine filter
+        if (currentFilters.machine && 
+            (!session.MACHINE || !session.MACHINE.toLowerCase().includes(currentFilters.machine))) {
+            return false;
+        }
+        
+        // Status filter
+        if (currentFilters.status && session.STATUS !== currentFilters.status) {
+            return false;
+        }
+        
+        // Event filter
+        if (currentFilters.event && 
+            (!session.EVENT || !session.EVENT.toLowerCase().includes(currentFilters.event))) {
+            return false;
+        }
+        
+        // Last call filter
+        if (currentFilters.lastCallMin && 
+            (!session.LAST_CALL_SECONDS || session.LAST_CALL_SECONDS < currentFilters.lastCallMin * 60)) {
+            return false;
+        }
+        
+        if (currentFilters.lastCallMax && 
+            (!session.LAST_CALL_SECONDS || session.LAST_CALL_SECONDS > currentFilters.lastCallMax * 60)) {
+            return false;
+        }
+        
+        // Advanced filters
+        if (currentFilters.osUser && 
+            (!session.OSUSER || !session.OSUSER.toLowerCase().includes(currentFilters.osUser))) {
+            return false;
+        }
+        
+        if (currentFilters.module && 
+            (!session.MODULE || !session.MODULE.toLowerCase().includes(currentFilters.module))) {
+            return false;
+        }
+        
+        if (currentFilters.onlyUserSessions && (!session.USERNAME || session.USERNAME === '')) {
+            return false;
+        }
+        
+        if (currentFilters.withSQL && (!session.SQL_ID || session.SQL_ID === '')) {
+            return false;
+        }
+        
+        return true;
+    });
+    
+    // Reset pagination
+    currentPage = 1;
+    updateSessionsTable();
+    updatePagination();
+}
+
+function getAdvancedFilters() {
+    return {
+        osUser: document.getElementById('filterOSUser')?.value.toLowerCase() || '',
+        module: document.getElementById('filterModule')?.value.toLowerCase() || '',
+        action: document.getElementById('filterAction')?.value || '',
+        serviceName: document.getElementById('filterServiceName')?.value || '',
+        port: document.getElementById('filterPort')?.value || '',
+        onlyUserSessions: document.getElementById('filterOnlyUserSessions')?.checked || false,
+        withSQL: document.getElementById('filterWithSQL')?.checked || false
+    };
+}
+
+function clearFilters() {
+    // Clear all filter inputs
+    document.getElementById('filterUsername').value = '';
+    document.getElementById('filterProgram').value = '';
+    document.getElementById('filterMachine').value = '';
+    document.getElementById('filterStatus').value = '';
+    document.getElementById('filterEvent').value = '';
+    document.getElementById('filterLastCallMin').value = '';
+    document.getElementById('filterLastCallMax').value = '';
+    
+    // Clear advanced filters
+    if (document.getElementById('filterOSUser')) document.getElementById('filterOSUser').value = '';
+    if (document.getElementById('filterModule')) document.getElementById('filterModule').value = '';
+    if (document.getElementById('filterAction')) document.getElementById('filterAction').value = '';
+    if (document.getElementById('filterServiceName')) document.getElementById('filterServiceName').value = '';
+    if (document.getElementById('filterPort')) document.getElementById('filterPort').value = '';
+    if (document.getElementById('filterOnlyUserSessions')) document.getElementById('filterOnlyUserSessions').checked = true;
+    if (document.getElementById('filterWithSQL')) document.getElementById('filterWithSQL').checked = false;
+    
+    // Reset filters
+    currentFilters = {};
+    filteredSessions = [...allSessions];
+    currentPage = 1;
+    updateSessionsTable();
+    updatePagination();
+}
+
+function applyAdvancedFilters() {
+    applyFilters();
+    bootstrap.Modal.getInstance(document.getElementById('sessionFilterModal')).hide();
+}
+
+function updateSessionMetrics(sessions) {
+    const total = sessions.length;
+    const active = sessions.filter(s => s.STATUS === 'ACTIVE').length;
+    const user = sessions.filter(s => s.USERNAME && s.USERNAME !== '').length;
+    const longRunning = sessions.filter(s => s.LAST_CALL_SECONDS > 3600).length;
+    const blocking = sessions.filter(s => s.BLOCKING_SESSION).length;
+    const background = sessions.filter(s => s.TYPE === 'BACKGROUND').length;
+    
+    // Update metric cards
+    document.getElementById('total-sessions').textContent = total;
+    document.getElementById('active-sessions').textContent = active;
+    document.getElementById('user-sessions').textContent = user;
+    document.getElementById('long-running-sessions').textContent = longRunning;
+    document.getElementById('blocking-sessions').textContent = blocking;
+    document.getElementById('background-sessions').textContent = background;
+}
+
+function updateSessionChart(sessions) {
+    if (!sessionChart) return;
+    
+    const active = sessions.filter(s => s.STATUS === 'ACTIVE').length;
+    const inactive = sessions.filter(s => s.STATUS === 'INACTIVE').length;
+    const background = sessions.filter(s => s.TYPE === 'BACKGROUND').length;
+    
+    sessionChart.data.datasets[0].data = [active, inactive, background];
+    sessionChart.update();
+}
+
+function updateTopWaitEvents(sessions) {
+    const container = document.getElementById('topWaitEvents');
+    if (!container) return;
+    
+    // Group by wait event
+    const waitEvents = {};
+    sessions.forEach(session => {
+        if (session.EVENT && session.EVENT !== 'SQL*Net message from client') {
+            if (!waitEvents[session.EVENT]) {
+                waitEvents[session.EVENT] = {
+                    count: 0,
+                    totalWait: 0,
+                    sessions: []
+                };
+            }
+            waitEvents[session.EVENT].count++;
+            waitEvents[session.EVENT].totalWait += session.SECONDS_IN_WAIT || 0;
+            waitEvents[session.EVENT].sessions.push(session.SID);
+        }
+    });
+    
+    // Sort by count
+    const sortedEvents = Object.entries(waitEvents)
+        .sort(([,a], [,b]) => b.count - a.count)
+        .slice(0, 10);
+    
+    let html = '';
+    if (sortedEvents.length === 0) {
+        html = '<div class="alert alert-info">No wait events found</div>';
+    } else {
+        sortedEvents.forEach(([event, data]) => {
+            const severity = data.count > 10 ? 'danger' : data.count > 5 ? 'warning' : 'info';
+            
+            html += `
+                <div class="card mb-2">
+                    <div class="card-body p-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong class="small">${event}</strong>
+                                <div class="small text-muted">
+                                    ${data.count} session(s) | Avg wait: ${(data.totalWait / data.count).toFixed(2)}s
+                                </div>
+                            </div>
+                            <span class="badge bg-${severity}">${data.count}</span>
+                        </div>
+                        <div class="small text-muted mt-1">
+                            SIDs: ${data.sessions.slice(0, 5).join(', ')}${data.sessions.length > 5 ? '...' : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+    
+    container.innerHTML = html;
+}
+
+function updateSessionsTable() {
+    const tbody = document.getElementById('sessionsTableBody');
+    const sessionCount = document.getElementById('session-count');
+    
+    if (!tbody) return;
+    
+    // Calculate pagination
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const pageSessions = filteredSessions.slice(startIndex, endIndex);
+    
+    sessionCount.textContent = `${filteredSessions.length} sessions (page ${currentPage})`;
+    
+    let html = '';
+    
+    if (pageSessions.length === 0) {
+        html = `
+            <tr>
+                <td colspan="11" class="text-center py-4">
+                    <div class="text-muted">
+                        <i class="bi bi-people-slash fs-1"></i>
+                        <p class="mt-2">No sessions found matching your filters</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+    } else {
+        pageSessions.forEach(session => {
+            const sessionId = `${session.SID},${session.SERIAL}`;
+            const isSelected = selectedSessions.has(sessionId);
+            const statusClass = session.STATUS === 'ACTIVE' ? 'danger' : 'secondary';
+            const lastCallClass = session.LAST_CALL_SECONDS > 3600 ? 'danger' : 
+                                 session.LAST_CALL_SECONDS > 600 ? 'warning' : 'success';
+            const isBlocking = session.BLOCKING_SESSION;
+            
+            html += `
+                <tr class="${isBlocking ? 'table-danger' : ''}">
+                    <td>
+                        <input type="checkbox" class="session-checkbox" 
+                               value="${sessionId}"
+                               ${isSelected ? 'checked' : ''}
+                               onchange="toggleSessionSelection(this)">
+                    </td>
+                    <td>
+                        <strong>${session.SID}</strong>
+                        <div class="small text-muted">${session.SERIAL}</div>
+                    </td>
+                    <td>
+                        ${session.USERNAME || '<span class="text-muted">N/A</span>'}
+                        ${session.OSUSER ? `<div class="small text-muted">${session.OSUSER}</div>` : ''}
+                    </td>
+                    <td>
+                        <span class="badge bg-${statusClass}">
+                            ${session.STATUS || 'N/A'}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="small" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis;">
+                            ${session.PROGRAM || 'N/A'}
+                        </div>
+                        ${session.MODULE ? `<div class="small text-muted">${session.MODULE}</div>` : ''}
+                    </td>
+                    <td>
+                        <div class="small" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis;">
+                            ${session.MACHINE || 'N/A'}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="small" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
+                            ${session.EVENT || 'N/A'}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge bg-${lastCallClass}">
+                            ${formatDuration(session.LAST_CALL_SECONDS || 0)}
+                        </span>
+                    </td>
+                    <td>
+                        ${session.SQL_ID ? `
+                            <code class="small">${session.SQL_ID}</code>
+                            <div>
+                                <button class="btn btn-sm btn-link p-0" onclick="showSqlDetails('${session.SQL_ID}')">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        ` : '<span class="text-muted">N/A</span>'}
+                    </td>
+                    <td>
+                        ${isBlocking ? `
+                            <span class="badge bg-danger">
+                                <i class="bi bi-lock"></i> Blocking
+                            </span>
+                            ${session.BLOCKING_SESSION ? `
+                                <div class="small text-muted">Blocked by: ${session.BLOCKING_SESSION}</div>
+                            ` : ''}
+                        ` : '<span class="text-muted">-</span>'}
+                    </td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-info" 
+                                    onclick="showSessionDetails(${session.SID}, ${session.SERIAL})">
+                                <i class="bi bi-info-circle"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" 
+                                    onclick="killSession(${session.SID}, ${session.SERIAL})">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
+                            <button class="btn btn-outline-warning" 
+                                    onclick="prepareTraceSession(${session.SID})">
+                                <i class="bi bi-binoculars"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+    
+    tbody.innerHTML = html;
+    updateSessionActions();
+}
+
+function updatePagination() {
+    const pagination = document.getElementById('sessionsPagination');
+    if (!pagination) return;
+    
+    const totalPages = Math.ceil(filteredSessions.length / pageSize);
+    
+    if (totalPages <= 1) {
+        pagination.style.display = 'none';
+        return;
+    }
+    
+    pagination.style.display = 'flex';
+    
+    let html = '';
+    
+    // Previous button
+    html += `
+        <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">Previous</a>
+        </li>
+    `;
+    
+    // Page numbers
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        html += `
+            <li class="page-item ${i === currentPage ? 'active' : ''}">
+                <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+            </li>
+        `;
+    }
+    
+    // Next button
+    html += `
+        <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+            <a class="page-link" href="#" onclick="changePage(${currentPage + 1})">Next</a>
+        </li>
+    `;
+    
+    pagination.innerHTML = html;
+}
+
+function changePage(page) {
+    if (page < 1 || page > Math.ceil(filteredSessions.length / pageSize)) {
+        return;
+    }
+    
+    currentPage = page;
+    updateSessionsTable();
+    updatePagination();
+}
+
+function updateLongRunningSessions(sessions) {
+    const tbody = document.querySelector('#longRunningTable tbody');
+    if (!tbody) return;
+    
+    const longRunning = sessions
+        .filter(s => s.LAST_CALL_SECONDS > 3600)
+        .slice(0, 10);
+    
+    let html = '';
+    
+    if (longRunning.length === 0) {
+        html = `
+            <tr>
+                <td colspan="7" class="text-center py-3">
+                    <span class="text-muted">No long running sessions found</span>
+                </td>
+            </tr>
+        `;
+    } else {
+        longRunning.forEach(session => {
+            html += `
+                <tr>
+                    <td>${session.SID}</td>
+                    <td>${session.USERNAME || 'N/A'}</td>
+                    <td>
+                        <div class="small" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis;">
+                            ${session.PROGRAM || 'N/A'}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge bg-danger">
+                            ${formatDuration(session.LAST_CALL_SECONDS)}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="small" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
+                            ${session.EVENT || 'N/A'}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="small" style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">
+                            ${session.SQL_TEXT ? session.SQL_TEXT.substring(0, 50) + '...' : 'N/A'}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-info" 
+                                    onclick="showSessionDetails(${session.SID}, ${session.SERIAL})">
+                                <i class="bi bi-info-circle"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" 
+                                    onclick="killSession(${session.SID}, ${session.SERIAL})">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+    
+    tbody.innerHTML = html;
+}
+
+function updateBlockingSessions(sessions) {
+    const tbody = document.querySelector('#blockingTable tbody');
+    if (!tbody) return;
+    
+    // Find blocking sessions and their victims
+    const blockingMap = new Map();
+    
+    sessions.forEach(session => {
+        if (session.BLOCKING_SESSION) {
+            const blockingSid = session.BLOCKING_SESSION;
+            if (!blockingMap.has(blockingSid)) {
+                const blockingSession = sessions.find(s => s.SID == blockingSid);
+                blockingMap.set(blockingSid, {
+                    blockingSession: blockingSession,
+                    blockedSessions: []
+                });
+            }
+            blockingMap.get(blockingSid).blockedSessions.push(session);
+        }
+    });
+    
+    const blockingEntries = Array.from(blockingMap.entries()).slice(0, 10);
+    
+    let html = '';
+    
+    if (blockingEntries.length === 0) {
+        html = `
+            <tr>
+                <td colspan="8" class="text-center py-3">
+                    <span class="text-muted">No blocking sessions found</span>
+                </td>
+            </tr>
+        `;
+    } else {
+        blockingEntries.forEach(([blockingSid, data]) => {
+            const blockingSession = data.blockingSession;
+            data.blockedSessions.forEach((blockedSession, index) => {
+                html += `
+                    <tr>
+                        <td>
+                            <strong>${blockingSid}</strong>
+                            <div class="small text-muted">${blockingSession?.USERNAME || 'N/A'}</div>
+                        </td>
+                        <td>
+                            <strong>${blockedSession.SID}</strong>
+                            <div class="small text-muted">${blockedSession.USERNAME || 'N/A'}</div>
+                        </td>
+                        <td>${blockingSession?.USERNAME || 'N/A'}</td>
+                        <td>${blockedSession.USERNAME || 'N/A'}</td>
+                        <td>
+                            <div class="small" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis;">
+                                ${blockedSession.EVENT || 'N/A'}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="small" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis;">
+                                ${blockedSession.ROW_WAIT_OBJ || 'N/A'}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-warning">
+                                ${formatDuration(blockedSession.SECONDS_IN_WAIT || 0)}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-danger" 
+                                        onclick="killSession(${blockingSession?.SID}, ${blockingSession?.SERIAL})">
+                                    <i class="bi bi-x-circle"></i>
+                                </button>
+                                <button class="btn btn-outline-warning" 
+                                        onclick="unblockSession(${blockedSession.SID}, ${blockedSession.SERIAL})">
+                                    <i class="bi bi-unlock"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        });
+    }
+    
+    tbody.innerHTML = html;
+}
+
+// Session Selection Functions
+function toggleSelectAll(checkbox) {
+    const sessionCheckboxes = document.querySelectorAll('.session-checkbox');
+    const isChecked = checkbox.checked;
+    
+    selectedSessions.clear();
+    
+    sessionCheckboxes.forEach(cb => {
+        cb.checked = isChecked;
+        if (isChecked) {
+            selectedSessions.add(cb.value);
+        }
+    });
+    
+    updateSessionActions();
+}
+
+function toggleSessionSelection(checkbox) {
+    const sessionId = checkbox.value;
+    
+    if (checkbox.checked) {
+        selectedSessions.add(sessionId);
+    } else {
+        selectedSessions.delete(sessionId);
+        // Uncheck select all if any checkbox is unchecked
+        document.getElementById('selectAllSessions').checked = false;
+    }
+    
+    updateSessionActions();
+}
+
+function updateSessionActions() {
+    const hasSelection = selectedSessions.size > 0;
+    const killBtn = document.getElementById('killSessionsBtn');
+    const disconnectBtn = document.getElementById('disconnectSessionsBtn');
+    
+    if (killBtn) killBtn.disabled = !hasSelection;
+    if (disconnectBtn) disconnectBtn.disabled = !hasSelection;
+}
+
+// Session Operations
+function killSelectedSessions() {
+    if (selectedSessions.size === 0) {
+        showWarning('Please select at least one session');
+        return;
+    }
+    
+    if (!confirm(`Kill ${selectedSessions.size} selected session(s)? This may cause data loss.`)) {
+        return;
+    }
+    
+    const promises = Array.from(selectedSessions).map(sessionId => {
+        const [sid, serial] = sessionId.split(',');
+        return killSessionRequest(sid, serial);
+    });
+    
+    Promise.allSettled(promises).then(results => {
+        const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
+        const failed = results.filter(r => r.status === 'rejected' || !r.value.success).length;
+        
+        if (successful > 0) {
+            showSuccess(`Successfully killed ${successful} session(s)`);
+        }
+        if (failed > 0) {
+            showWarning(`Failed to kill ${failed} session(s)`);
+        }
+        
+        selectedSessions.clear();
+        document.getElementById('selectAllSessions').checked = false;
+        refreshSessions();
+    });
+}
+
+function disconnectSelectedSessions() {
+    if (selectedSessions.size === 0) {
+        showWarning('Please select at least one session');
+        return;
+    }
+    
+    if (!confirm(`Disconnect ${selectedSessions.size} selected session(s)?`)) {
+        return;
+    }
+    
+    showInfo('Disconnect functionality will be implemented in a future update');
+    // Implementation would be similar to killSelectedSessions
+}
+
+function killSession(sid, serial) {
+    if (!confirm(`Kill session ${sid},${serial}? This may cause data loss.`)) {
+        return;
+    }
+    
+    killSessionRequest(sid, serial)
+        .then(result => {
+            if (result.success) {
+                showSuccess(`Session ${sid},${serial} killed successfully`);
+                refreshSessions();
+            } else {
+                showError(`Failed to kill session: ${result.message}`);
+            }
+        })
+        .catch(error => {
+            showError(`Network error: ${error.message}`);
+        });
+}
+
+function killSessionRequest(sid, serial) {
+    return fetch('/api/dba/kill-session', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ sid: sid, serial: serial })
+    })
+    .then(response => response.json());
+}
+
+function unblockSession(sid, serial) {
+    // This would typically involve killing the blocking session or committing/rolling back transactions
+    showSessionDetails(sid, serial);
+}
+
+// Session Details
+function showSessionDetails(sid, serial) {
+    fetch(`/api/dashboard/session/${sid}/${serial}/details`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displaySessionDetails(data.data, sid, serial);
+            } else {
+                showError('Failed to load session details');
+            }
+        })
+        .catch(error => {
+            showError('Network error loading session details');
+        });
+}
+
+function displaySessionDetails(session, sid, serial) {
+    const modal = new bootstrap.Modal(document.getElementById('sessionDetailsModal'));
+    const content = document.getElementById('sessionDetailsContent');
+    
+    // Format session details
+    let html = `
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table table-sm">
+                    <tr><th>SID:</th><td>${session.SID}</td></tr>
+                    <tr><th>Serial#:</th><td>${session.SERIAL}</td></tr>
+                    <tr><th>Username:</th><td>${session.USERNAME || 'N/A'}</td></tr>
+                    <tr><th>OS User:</th><td>${session.OSUSER || 'N/A'}</td></tr>
+                    <tr><th>Status:</th><td><span class="badge bg-${session.STATUS === 'ACTIVE' ? 'danger' : 'secondary'}">${session.STATUS}</span></td></tr>
+                    <tr><th>Logon Time:</th><td>${session.LOGON_TIME || 'N/A'}</td></tr>
+                    <tr><th>Last Call:</th><td>${formatDuration(session.LAST_CALL_SECONDS || 0)}</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <table class="table table-sm">
+                    <tr><th>Program:</th><td>${session.PROGRAM || 'N/A'}</td></tr>
+                    <tr><th>Machine:</th><td>${session.MACHINE || 'N/A'}</td></tr>
+                    <tr><th>Module:</th><td>${session.MODULE || 'N/A'}</td></tr>
+                    <tr><th>Action:</th><td>${session.ACTION || 'N/A'}</td></tr>
+                    <tr><th>Event:</th><td>${session.EVENT || 'N/A'}</td></tr>
+                    <tr><th>Wait Class:</th><td>${session.WAIT_CLASS || 'N/A'}</td></tr>
+                    <tr><th>State:</th><td>${session.STATE || 'N/A'}</td></tr>
+                </table>
+            </div>
+        </div>
+    `;
+    
+    // Add SQL details if available
+    if (session.SQL_ID || session.SQL_TEXT) {
+        html += `
+            <div class="mt-3">
+                <h6>Current SQL</h6>
+                <div class="card">
+                    <div class="card-body">
+                        <code class="small">${session.SQL_ID || 'No SQL ID'}</code>
+                        ${session.SQL_TEXT ? `
+                            <pre class="mt-2 bg-light p-2" style="max-height: 200px; overflow-y: auto;">
+${session.SQL_TEXT.substring(0, 500)}${session.SQL_TEXT.length > 500 ? '...' : ''}</pre>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Add blocking information
+    if (session.BLOCKING_SESSION) {
+        html += `
+            <div class="mt-3">
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i> This session is being blocked by SID ${session.BLOCKING_SESSION}
+                </div>
+            </div>
+        `;
+    }
+    
+    content.innerHTML = html;
+    
+    // Update modal buttons
+    document.getElementById('killSessionBtnModal').onclick = () => {
+        modal.hide();
+        killSession(sid, serial);
+    };
+    
+    document.getElementById('traceSessionBtnModal').onclick = () => {
+        modal.hide();
+        prepareTraceSession(sid);
+    };
+    
+    modal.show();
+}
+
+// SQL Details
+function showSqlDetails(sqlId) {
+    fetch(`/api/dashboard/sql/${sqlId}/details`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const modal = new bootstrap.Modal(document.getElementById('sqlDetailsModal'));
+                const content = document.getElementById('sqlDetailsContent');
+                
+                let html = `
+                    <h5>SQL ID: ${sqlId}</h5>
+                    <div class="card">
+                        <div class="card-body">
+                            <pre style="max-height: 400px; overflow-y: auto;">${data.data.SQL_FULLTEXT || data.data.SQL_TEXT || 'No SQL text available'}</pre>
+                        </div>
+                    </div>
+                `;
+                
+                // Add execution statistics if available
+                const stats = ['EXECUTIONS', 'ELAPSED_TIME', 'CPU_TIME', 'BUFFER_GETS', 'DISK_READS', 'ROWS_PROCESSED'];
+                const hasStats = stats.some(stat => data.data[stat]);
+                
+                if (hasStats) {
+                    html += `
+                        <div class="mt-3">
+                            <h6>Execution Statistics</h6>
+                            <table class="table table-sm">
+                                ${stats.map(stat => data.data[stat] ? `
+                                    <tr>
+                                        <th>${stat.replace(/_/g, ' ')}:</th>
+                                        <td>${formatNumber(data.data[stat])}</td>
+                                    </tr>
+                                ` : '').join('')}
+                            </table>
+                        </div>
+                    `;
+                }
+                
+                content.innerHTML = html;
+                modal.show();
+            }
+        });
+}
+
+// Trace Session
+function prepareTraceSession(sid) {
+    document.getElementById('traceSessionId').value = sid;
+    const modal = new bootstrap.Modal(document.getElementById('traceSessionModal'));
+    modal.show();
+}
+
+function startTracing() {
+    const sid = document.getElementById('traceSessionId').value;
+    const level = document.getElementById('traceLevel').value;
+    const duration = document.getElementById('traceDuration').value;
+    const includeWaits = document.getElementById('traceWaits').checked;
+    const includeBinds = document.getElementById('traceBinds').checked;
+    
+    // Build trace command
+    let traceCommand = `ALTER SESSION SET tracefile_identifier='DASHBOARD_TRACE_${sid}';\n`;
+    traceCommand += `EXEC DBMS_MONITOR.SESSION_TRACE_ENABLE(${sid}, null, waits=>${includeWaits}, binds=>${includeBinds});\n`;
+    
+    if (duration > 0) {
+        traceCommand += `-- Trace will run for ${duration} minutes\n`;
+        traceCommand += `-- Use: EXEC DBMS_MONITOR.SESSION_TRACE_DISABLE(${sid}, null); to stop manually`;
+    }
+    
+    // Show trace command
+    const modal = new bootstrap.Modal(document.getElementById('sqlDetailsModal'));
+    const content = document.getElementById('sqlDetailsContent');
+    
+    content.innerHTML = `
+        <h5>Trace Session ${sid}</h5>
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> 
+            Execute the following commands to start tracing session ${sid}
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <pre style="max-height: 300px; overflow-y: auto;">${traceCommand}</pre>
+            </div>
+        </div>
+        <div class="mt-3">
+            <p class="small text-muted">
+                <i class="bi bi-lightbulb"></i> 
+                Trace files can be found in the database diagnostic destination.
+                Use the following query to find the trace file:
+                <code>SELECT value FROM v$diag_info WHERE name = 'Diag Trace';</code>
+            </p>
+        </div>
+    `;
+    
+    modal.show();
+    
+    // Close trace modal
+    bootstrap.Modal.getInstance(document.getElementById('traceSessionModal')).hide();
+}
+
+// Block Chain View
+function showBlockingChain() {
+    fetch('/api/dashboard/metrics/locks')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayBlockChain(data.data);
+            }
+        });
+}
+
+function displayBlockChain(locks) {
+    const modal = new bootstrap.Modal(document.getElementById('blockChainModal'));
+    const content = document.getElementById('blockChainDiagram');
+    
+    // Create a simple block chain visualization
+    let html = '<div class="block-chain">';
+    
+    // Group by blocking session
+    const blockingMap = new Map();
+    
+    locks.forEach(lock => {
+        if (lock.BLOCKING_SESSION) {
+            if (!blockingMap.has(lock.BLOCKING_SESSION)) {
+                blockingMap.set(lock.BLOCKING_SESSION, []);
+            }
+            blockingMap.get(lock.BLOCKING_SESSION).push(lock);
+        }
+    });
+    
+    if (blockingMap.size === 0) {
+        html = '<div class="alert alert-success">No blocking chains detected</div>';
+    } else {
+        blockingMap.forEach((blockedSessions, blockingSid) => {
+            html += `
+                <div class="block-chain-item mb-3">
+                    <div class="card">
+                        <div class="card-header bg-danger text-white">
+                            <strong>Blocking Session: ${blockingSid}</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="block-chain-victims">
+                                <h6>Blocked Sessions:</h6>
+                                <ul class="list-group">
+            `;
+            
+            blockedSessions.forEach(victim => {
+                html += `
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>SID ${victim.SID}</strong>
+                            <div class="small text-muted">
+                                Object: ${victim.OBJECT_NAME || 'N/A'} | 
+                                Mode: ${victim.LOCK_MODE_DESC || 'N/A'}
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger" 
+                                onclick="killSession(${blockingSid}, ${victim.SERIAL})">
+                            <i class="bi bi-x-circle"></i> Kill Blocker
+                        </button>
+                    </li>
+                `;
+            });
+            
+            html += `
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+    
+    html += '</div>';
+    content.innerHTML = html;
+    modal.show();
+}
+
+function showLongRunningSessions() {
+    // Filter and show only long running sessions
+    document.getElementById('filterLastCallMin').value = 60;
+    applyFilters();
+}
+
+// Auto Refresh
+function startAutoRefresh() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+    }
+    
+    autoRefreshInterval = setInterval(() => {
+        if (autoRefreshEnabled) {
+            refreshSessions();
+        }
+    }, 30000); // 30 seconds
+}
+
+function stopAutoRefresh() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+    }
+}
+
+// Utility Functions
+function formatDuration(seconds) {
+    if (seconds < 60) {
+        return `${seconds.toFixed(0)}s`;
+    } else if (seconds < 3600) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}m ${remainingSeconds.toFixed(0)}s`;
+    } else {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        return `${hours}h ${minutes}m`;
+    }
+}
+
+function formatNumber(num) {
+    if (num >= 1000000) {
+        return (num / 1000000).toFixed(2) + 'M';
+    } else if (num >= 1000) {
+        return (num / 1000).toFixed(2) + 'K';
+    }
+    return num.toString();
+}
+
+function showLoading() {
+    const tbody = document.getElementById('sessionsTableBody');
+    if (tbody) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="11" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading sessions...</p>
+                </td>
+            </tr>
+        `;
+    }
+}
+
+function hideLoading() {
+    // Loading state is cleared when table is updated
+}
+
+function showSuccess(message) {
+    showAlert(message, 'success');
+}
+
+function showWarning(message) {
+    showAlert(message, 'warning');
+}
+
+function showError(message) {
+    showAlert(message, 'danger');
+}
+
+function showInfo(message) {
+    showAlert(message, 'info');
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+    alertDiv.style.zIndex = '1050';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script>
+
+<style>
+/* Custom styles for sessions page */
+.block-chain {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.block-chain-item {
+    border-left: 4px solid #dc3545;
+    padding-left: 10px;
+}
+
+.block-chain-victims {
+    margin-left: 20px;
+}
+
+.session-checkbox {
+    cursor: pointer;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+.table-danger {
+    background-color: rgba(220, 53, 69, 0.05);
+}
+
+.badge {
+    font-weight: 500;
+}
+
+/* Fix for long text in tables */
+.table td {
+    vertical-align: middle;
+}
+
+/* Custom scrollbar for tables */
+.table-responsive::-webkit-scrollbar {
+    height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-header .btn-group {
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    
+    .card-header .btn {
+        font-size: 0.875rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .table td, .table th {
+        padding: 0.5rem;
+    }
+}
+
+/* Animation for session updates */
+@keyframes highlightRow {
+    0% { background-color: rgba(255, 193, 7, 0.3); }
+    100% { background-color: transparent; }
+}
+
+.session-updated {
+    animation: highlightRow 2s ease-in-out;
+}
+</style>

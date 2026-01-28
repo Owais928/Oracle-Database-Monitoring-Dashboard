@@ -1,0 +1,206 @@
+<div class="row">
+    <!-- Health Status Cards -->
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-heart-pulse"></i> Database Health Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row" id="health-cards">
+                    <div class="col-12 text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading health status...</span>
+                        </div>
+                        <p class="text-muted mt-2">Loading health status...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Performance Overview -->
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-graph-up"></i> Performance Overview
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="performanceChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-pie-chart"></i> Session Distribution
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="sessionChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Tablespace Usage -->
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-hdd"></i> Top Tablespaces
+                </h5>
+                <a href="/storage" class="btn btn-sm btn-outline-primary">
+                    View All <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="tablespaceTable">
+                        <thead>
+                            <tr>
+                                <th>Tablespace</th>
+                                <th>Used %</th>
+                                <th>Used (MB)</th>
+                                <th>Total (MB)</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="5" class="text-center py-3">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <span class="text-muted ms-2">Loading tablespace data...</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Active Sessions -->
+    <div class="col-lg-6">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-people"></i> Active Sessions
+                </h5>
+                <div>
+                    <span class="badge bg-danger me-2" id="active-sessions-count">0</span>
+                    <a href="/sessions" class="btn btn-sm btn-outline-primary">
+                        View All <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="sessionsTable">
+                        <thead>
+                            <tr>
+                                <th>SID</th>
+                                <th>Username</th>
+                                <th>Program</th>
+                                <th>Event</th>
+                                <th>Last Call</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="5" class="text-center py-3">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <span class="text-muted ms-2">Loading session data...</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Alerts -->
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-exclamation-triangle"></i> Recent Alerts
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="alert-log" style="max-height: 200px; overflow-y: auto;">
+                    <div class="text-center py-3">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <span class="text-muted ms-2">Loading alerts...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function updateLastUpdateTime() {
+        const now = new Date();
+        document.getElementById('last-update').textContent = now.toLocaleTimeString();
+    }
+    
+    updateLastUpdateTime();
+    setInterval(updateLastUpdateTime, 1000);
+    
+    document.getElementById('refreshInterval').addEventListener('change', function() {
+        const interval = parseInt(this.value);
+        if (socket) {
+            socket.emit('setRefreshInterval', interval);
+        }
+    });
+    
+    window.requestImmediateUpdate = function() {
+        if (socket) {
+            socket.emit('requestUpdate');
+            showAlert('Refreshing data...', 'info');
+        }
+    };
+    
+    window.showAlert = function(message, type = 'info', duration = 5000) {
+        const container = document.getElementById('alerts-container');
+        const alertId = 'alert-' + Date.now();
+        
+        const alertHTML = `
+            <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        
+        container.insertAdjacentHTML('afterbegin', alertHTML);
+        
+        if (duration > 0) {
+            setTimeout(() => {
+                const alert = document.getElementById(alertId);
+                if (alert) {
+                    alert.remove();
+                }
+            }, duration);
+        }
+    };
+});
+</script>

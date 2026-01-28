@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oracle Database Monitoring Dashboard - Comprehensive Guide</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.8;
+            color: #333;
+        }
+        
+        .blog-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        
+        .blog-header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .blog-header p {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+        }
+        
+        .author-info {
+            background: rgba(0,0,0,0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+            display: inline-block;
+        }
+        
+        .content-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-top: 60px;
+            margin-bottom: 30px;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 15px;
+        }
+        
+        .feature-card {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        
+        .feature-card:hover {
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.2);
+            transform: translateX(5px);
+        }
+        
+        .feature-card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .feature-card i {
+            font-size: 1.5rem;
+        }
+        
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .image-placeholder {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            aspect-ratio: 16/9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            color: white;
+            font-size: 1.2rem;
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        .highlight {
+            background: #fff3cd;
+            padding: 20px;
+            border-left: 4px solid #ffc107;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        
+        .tech-stack {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+        
+        .tech-item {
+            background: white;
+            border: 2px solid #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .tech-item strong {
+            color: #667eea;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .benefit-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .benefit-list li {
+            padding: 12px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+        
+        .benefit-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #28a745;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        .footer-section {
+            background: #f8f9fa;
+            padding: 40px 0;
+            margin-top: 80px;
+            border-top: 2px solid #e9ecef;
+        }
+        
+        .creator-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin: 10px 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .blog-header h1 {
+                font-size: 2rem;
+            }
+            
+            .section-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="blog-header">
+        <div class="content-wrapper">
+            <h1><i class="bi bi-database"></i> Oracle Database Monitoring Dashboard</h1>
+            <p>Professional-Grade Real-Time Database Monitoring and Administration</p>
+            <p style="font-size: 1rem; margin-bottom: 20px;">A Comprehensive Guide to Enterprise Database Management</p>
+            <div class="author-info">
+                <div style="margin-bottom: 10px;">
+                    <strong>Created by: M-AWAIS</strong>
+                </div>
+                <div style="font-size: 0.9rem;">
+                    Version 1.0.0 | <span id="current-year"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content-wrapper">
+        <!-- Introduction -->
+        <section>
+            <h2 class="section-title"><i class="bi bi-info-circle"></i> Introduction</h2>
+            <p>
+                The <strong>Oracle Database Monitoring Dashboard</strong> is a cutting-edge, professional-grade monitoring and administration tool designed for database administrators and enterprise IT teams. Built with modern web technologies and optimized for performance, this comprehensive dashboard provides real-time insights into Oracle Database health, performance metrics, and system statistics.
+            </p>
+            <p>
+                Whether you're managing a single development database or multiple production Oracle instances, this dashboard offers the tools, visibility, and control you need to ensure optimal database performance and availability.
+            </p>
+            
+            <div class="image-placeholder">
+                <i class="bi bi-image"></i> Dashboard Login Screen
+            </div>
+        </section>
+
+        <!-- Key Features -->
+        <section>
+            <h2 class="section-title"><i class="bi bi-stars"></i> Key Features</h2>
+            
+            <div class="feature-card">
+                <h3><i class="bi bi-speedometer2"></i> Real-Time Performance Monitoring</h3>
+                <p>
+                    Monitor critical database performance metrics in real-time. Track CPU usage, memory consumption, I/O operations, and buffer cache hit ratios. The dashboard updates automatically, providing instant visibility into database behavior patterns and potential bottlenecks.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <h3><i class="bi bi-clock-history"></i> Wait Events Analysis</h3>
+                <p>
+                    Understand what your database is waiting for. The Wait Events feature breaks down system wait times by wait class (CPU, User I/O, System I/O, Concurrency, etc.), helping you identify performance issues at their source and prioritize optimization efforts.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <h3><i class="bi bi-code-slash"></i> SQL Performance Analysis</h3>
+                <p>
+                    Analyze your most resource-intensive SQL statements. View execution statistics, elapsed time, CPU time, buffer gets, and disk reads. Execute custom SQL queries directly from the dashboard and generate explain plans to optimize query performance.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <h3><i class="bi bi-people"></i> Session Management</h3>
+                <p>
+                    Monitor active database sessions in detail. Track who's connected, what they're running, what events they're waiting for, and how long they've been inactive. Kill problematic sessions with a single click to prevent resource hogging.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <h3><i class="bi bi-hdd"></i> Tablespace Monitoring</h3>
+                <p>
+                    Track tablespace usage across your database. Monitor allocation, usage, and free space percentage. Get alerts when tablespaces approach capacity and manage storage efficiently to prevent "space not available" errors.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <h3><i class="bi bi-lock"></i> Database Administration Tools</h3>
+                <p>
+                    Access powerful DBA tools including schema export, backup operations, data file management, and system parameter configuration. Execute administrative tasks safely with built-in validation and confirmation dialogs.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <h3><i class="bi bi-shield-lock"></i> Enterprise Security (HTTPS/SSL)</h3>
+                <p>
+                    All communications are encrypted using industry-standard HTTPS with Let's Encrypt SSL certificates. Session security is enforced with secure cookies, HSTS headers, and comprehensive Content Security Policy directives.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <h3><i class="bi bi-chart-line"></i> Interactive Data Visualization</h3>
+                <p>
+                    Beautiful, responsive charts powered by Chart.js provide instant visual understanding of performance trends. Track system metrics, session distribution, wait event patterns, and more through intuitive graphical representations.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <h3><i class="bi bi-diagram-3"></i> Lock Chain Analysis</h3>
+                <p>
+                    Identify and visualize blocking sessions. The dashboard shows which sessions are blocking others, helping DAs quickly resolve lock contention issues and restore database responsiveness.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <h3><i class="bi bi-arrow-repeat"></i> Real-Time Updates with WebSocket</h3>
+                <p>
+                    Powered by Socket.IO, the dashboard maintains persistent WebSocket connections for real-time data updates without constant page refreshes. Experience zero-latency performance monitoring.
+                </p>
+            </div>
+        </section>
+
+        <!-- Technical Stack -->
+        <section>
+            <h2 class="section-title"><i class="bi bi-gear"></i> Technology Stack</h2>
+            
+            <h4 style="color: #667eea; margin: 30px 0 20px 0;">Backend & Database</h4>
+            <div class="tech-stack">
+                <div class="tech-item">
+                    <strong>Node.js</strong>
+                    <span>Runtime environment</span>
+                </div>
+                <div class="tech-item">
+                    <strong>Express.js</strong>
+                    <span>Web framework</span>
+                </div>
+                <div class="tech-item">
+                    <strong>Oracle Database</strong>
+                    <span>Data source</span>
+                </div>
+                <div class="tech-item">
+                    <strong>oracledb</strong>
+                    <span>Database driver</span>
+                </div>
+            </div>
+
+            <h4 style="color: #667eea; margin: 30px 0 20px 0;">Frontend & Visualization</h4>
+            <div class="tech-stack">
+                <div class="tech-item">
+                    <strong>Bootstrap 5</strong>
+                    <span>UI framework</span>
+                </div>
+                <div class="tech-item">
+                    <strong>EJS</strong>
+                    <span>Template engine</span>
+                </div>
+                <div class="tech-item">
+                    <strong>Chart.js</strong>
+                    <span>Data visualization</span>
+                </div>
+                <div class="tech-item">
+                    <strong>Socket.IO</strong>
+                    <span>Real-time updates</span>
+                </div>
+            </div>
+
+            <h4 style="color: #667eea; margin: 30px 0 20px 0;">Security</h4>
+            <div class="tech-stack">
+                <div class="tech-item">
+                    <strong>Helmet.js</strong>
+                    <span>Security headers</span>
+                </div>
+                <div class="tech-item">
+                    <strong>Let's Encrypt</strong>
+                    <span>SSL certificates</span>
+                </div>
+                <div class="tech-item">
+                    <strong>express-session</strong>
+                    <span>Session management</span>
+                </div>
+                <div class="tech-item">
+                    <strong>CORS</strong>
+                    <span>Cross-origin protection</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard Sections -->
+        <section>
+            <h2 class="section-title"><i class="bi bi-window-split"></i> Dashboard Sections</h2>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;"><i class="bi bi-graph-up"></i> Performance Dashboard</h4>
+            <p>
+                The main performance dashboard is your central hub for database health monitoring. It displays:
+            </p>
+            <ul class="benefit-list">
+                <li><strong>System Metrics:</strong> User commits, rollbacks, physical reads/writes, redo size, sort operations</li>
+                <li><strong>Wait Events Table:</strong> Detailed breakdown of system wait times by wait class</li>
+                <li><strong>Top SQL Statements:</strong> Most resource-consuming queries with execution statistics</li>
+                <li><strong>Performance Charts:</strong> Visual representation of database activity and trends</li>
+                <li><strong>Real-Time Updates:</strong> Automatic refresh of metrics every 5-30 seconds</li>
+            </ul>
+
+            <div class="image-placeholder">
+                <i class="bi bi-image"></i> Performance Monitoring Dashboard
+            </div>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;"><i class="bi bi-people"></i> Sessions Management</h4>
+            <p>
+                Comprehensive session monitoring and management capabilities include:
+            </p>
+            <ul class="benefit-list">
+                <li><strong>Active Sessions List:</strong> View all connected users with their programs and activities</li>
+                <li><strong>Wait Event Tracking:</strong> See what each session is waiting for and wait times</li>
+                <li><strong>Session Filtering:</strong> Advanced filters by username, program, status, and wait events</li>
+                <li><strong>Session Termination:</strong> Safely kill problematic sessions with immediate effect</li>
+                <li><strong>Lock Chain Visualization:</strong> Identify blocking sessions and their dependencies</li>
+                <li><strong>Long-Running Session Detection:</strong> Automatically highlight sessions running over 1 hour</li>
+            </ul>
+
+            <div class="image-placeholder">
+                <i class="bi bi-image"></i> Sessions Management Interface
+            </div>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;"><i class="bi bi-code-slash"></i> SQL Executor</h4>
+            <p>
+                A powerful SQL editor and execution environment featuring:
+            </p>
+            <ul class="benefit-list">
+                <li><strong>Query Editor:</strong> Write and execute SQL with syntax highlighting</li>
+                <li><strong>Explain Plan Generation:</strong> Understand query execution paths and cost</li>
+                <li><strong>Results Visualization:</strong> View query results in formatted tables</li>
+                <li><strong>Data Export:</strong> Export results as CSV or JSON for external analysis</li>
+                <li><strong>Query Templates:</strong> Pre-built queries for common DBA tasks</li>
+                <li><strong>Favorite Queries:</strong> Save and quickly access frequently-used queries</li>
+            </ul>
+
+            <div class="image-placeholder">
+                <i class="bi bi-image"></i> SQL Executor Interface
+            </div>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;"><i class="bi bi-hdd"></i> Storage Management</h4>
+            <p>
+                Monitor and manage your database storage infrastructure:
+            </p>
+            <ul class="benefit-list">
+                <li><strong>Tablespace Overview:</strong> All tablespaces with size, usage, and status</li>
+                <li><strong>Space Alerts:</strong> Identify nearly-full tablespaces before they cause issues</li>
+                <li><strong>Data File Management:</strong> View and manage underlying data files</li>
+                <li><strong>Growth Forecasting:</strong> Estimated time to fill based on current growth rates</li>
+            </ul>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;"><i class="bi bi-gear"></i> DBA Tools</h4>
+            <p>
+                Advanced database administration capabilities:
+            </p>
+            <ul class="benefit-list">
+                <li><strong>Schema Export:</strong> Complete schema backup with DDL generation</li>
+                <li><strong>Database Backup:</strong> Create and manage database backups directly from the dashboard</li>
+                <li><strong>Backup Status:</strong> View backup history and recent backup operations</li>
+                <li><strong>System Information:</strong> Instance details, version, startup time, and status</li>
+                <li><strong>Database Parameters:</strong> Review and manage database initialization parameters</li>
+            </ul>
+
+            <div class="image-placeholder">
+                <i class="bi bi-image"></i> DBA Tools Interface
+            </div>
+        </section>
+
+        <!-- Core Functionality -->
+        <section>
+            <h2 class="section-title"><i class="bi bi-wrench"></i> Core Functionality</h2>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;">Performance Metrics Tracking</h4>
+            <p>
+                The dashboard continuously monitors essential Oracle metrics:
+            </p>
+            <div class="code-block">
+- User Commits / Rollbacks
+- Physical Reads / Writes
+- Redo Size (amount of redo log generated)
+- Sort Operations (memory and disk)
+- Buffer Cache Hit Ratio
+- Execution Rates
+            </div>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;">Wait Event Classification</h4>
+            <p>
+                Wait events are categorized by class to help prioritize performance tuning:
+            </p>
+            <div class="code-block">
+- CPU: Waiting for CPU resources
+- User I/O: Disk I/O wait times
+- System I/O: System background I/O
+- Application: Application-level locks
+- Concurrency: Lock contention
+- Commit: Redo log write waits
+- Configuration: Parameter-related waits
+- Administrative: Admin operation waits
+- Scheduler: Job scheduler waits
+            </div>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;">SQL Performance Analysis</h4>
+            <p>
+                Analyze your SQL statements with detailed statistics:
+            </p>
+            <ul class="benefit-list">
+                <li>Execution count and frequency</li>
+                <li>Total, average, and worst-case elapsed time</li>
+                <li>CPU time consumption</li>
+                <li>Buffer gets and disk reads</li>
+                <li>Rows processed</li>
+                <li>Parse count and load time</li>
+            </ul>
+        </section>
+
+        <!-- Security Features -->
+        <section>
+            <h2 class="section-title"><i class="bi bi-shield-check"></i> Security Features</h2>
+
+            <div class="highlight">
+                <strong>🔒 Enterprise-Grade Security</strong>
+                <p style="margin-bottom: 0; margin-top: 10px;">
+                    The Oracle Dashboard implements comprehensive security measures to protect your sensitive database information and maintain compliance with industry standards.
+                </p>
+            </div>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;">HTTPS/SSL Encryption</h4>
+            <ul class="benefit-list">
+                <li>All traffic encrypted with industry-standard TLS 1.2+</li>
+                <li>Let's Encrypt SSL certificates for automated renewal</li>
+                <li>HSTS headers enforce HTTPS for 1 year</li>
+                <li>Prevents man-in-the-middle attacks</li>
+            </ul>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;">Session Management</h4>
+            <ul class="benefit-list">
+                <li>Secure session cookies (httpOnly, secure, sameSite)</li>
+                <li>Automatic session expiration (24-hour timeout)</li>
+                <li>CSRF protection via token validation</li>
+                <li>Session storage in memory with option for persistence</li>
+            </ul>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;">Content Security Policy</h4>
+            <ul class="benefit-list">
+                <li>Strict CSP headers prevent script injection</li>
+                <li>Whitelist of trusted external domains</li>
+                <li>WebSocket support for real-time updates (ws/wss)</li>
+                <li>Form submission restrictions</li>
+            </ul>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;">Additional Headers</h4>
+            <ul class="benefit-list">
+                <li>X-Content-Type-Options: Prevent MIME sniffing</li>
+                <li>X-Frame-Options: Clickjacking protection</li>
+                <li>X-XSS-Protection: Browser XSS filter</li>
+                <li>Referrer-Policy: Control referrer information</li>
+                <li>Permissions-Policy: Restrict browser features</li>
+            </ul>
+        </section>
+
+        <!-- Benefits -->
+        <section>
+            <h2 class="section-title"><i class="bi bi-award"></i> Key Benefits</h2>
+
+            <div class="row" style="margin: 30px 0;">
+                <div class="col-md-6 mb-4">
+                    <div class="feature-card">
+                        <h5 style="color: #667eea; margin-bottom: 15px;">
+                            <i class="bi bi-lightning"></i> Proactive Monitoring
+                        </h5>
+                        <p>
+                            Identify performance issues before they impact users. Real-time alerts and metrics help you stay ahead of problems.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="feature-card">
+                        <h5 style="color: #667eea; margin-bottom: 15px;">
+                            <i class="bi bi-clock"></i> Reduced MTTR
+                        </h5>
+                        <p>
+                            Mean Time To Resolution decreases with instant visibility into database problems and built-in diagnostic tools.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="feature-card">
+                        <h5 style="color: #667eea; margin-bottom: 15px;">
+                            <i class="bi bi-graph-up"></i> Performance Optimization
+                        </h5>
+                        <p>
+                            Data-driven insights help you optimize slow queries and tune database parameters for maximum performance.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="feature-card">
+                        <h5 style="color: #667eea; margin-bottom: 15px;">
+                            <i class="bi bi-percent"></i> Cost Reduction
+                        </h5>
+                        <p>
+                            Efficient resource utilization and reduced downtime lead to lower operational costs and better ROI.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="feature-card">
+                        <h5 style="color: #667eea; margin-bottom: 15px;">
+                            <i class="bi bi-eye"></i> Full Visibility
+                        </h5>
+                        <p>
+                            Comprehensive insights into all aspects of your database from user sessions to system-level wait events.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="feature-card">
+                        <h5 style="color: #667eea; margin-bottom: 15px;">
+                            <i class="bi bi-check-circle"></i> Compliance Ready
+                        </h5>
+                        <p>
+                            Enterprise security features help meet compliance requirements and protect sensitive data.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Use Cases -->
+        <section>
+            <h2 class="section-title"><i class="bi bi-briefcase"></i> Use Cases</h2>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;">Database Administration</h4>
+            <p>
+                <strong>Challenge:</strong> Managing multiple Oracle instances and ensuring optimal performance
+                <br><strong>Solution:</strong> Centralized dashboard for monitoring all instances, managing sessions, and executing administrative tasks
+            </p>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;">Performance Tuning</h4>
+            <p>
+                <strong>Challenge:</strong> Identifying slow queries and performance bottlenecks
+                <br><strong>Solution:</strong> Top SQL analysis, explain plans, and wait event monitoring pinpoint optimization opportunities
+            </p>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;">Production Support</h4>
+            <p>
+                <strong>Challenge:</strong> Quickly diagnosing and resolving production database issues
+                <br><strong>Solution:</strong> Real-time monitoring and lock chain analysis enable rapid problem identification and resolution
+            </p>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;">Capacity Planning</h4>
+            <p>
+                <strong>Challenge:</strong> Understanding storage growth and predicting when expansion is needed
+                <br><strong>Solution:</strong> Comprehensive tablespace monitoring with growth trends helps plan capacity expansion
+            </p>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;">Security & Compliance</h4>
+            <p>
+                <strong>Challenge:</strong> Monitoring who accesses the database and maintaining security standards
+                <br><strong>Solution:</strong> Session tracking, secure HTTPS access, and comprehensive audit logs
+            </p>
+        </section>
+
+        <!-- Getting Started -->
+        <section>
+            <h2 class="section-title"><i class="bi bi-play-circle"></i> Getting Started</h2>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;">Prerequisites</h4>
+            <ul class="benefit-list">
+                <li>Node.js 14+ installed on the server</li>
+                <li>Oracle Database 11g or higher</li>
+                <li>Oracle Net connectivity to target databases</li>
+                <li>HTTPS/SSL certificates (Let's Encrypt recommended)</li>
+                <li>Basic knowledge of Oracle databases</li>
+            </ul>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;">Installation Steps</h4>
+            <div class="code-block">
+1. Clone the repository
+   git clone https://github.com/yourusername/oracle-dashboard.git
+
+2. Install dependencies
+   npm install
+
+3. Configure database connection
+   Create .env file with database credentials
+
+4. Start the server
+   npm run dev
+
+5. Access the dashboard
+   Open https://your-domain:3022 in your browser
+            </div>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;">Initial Configuration</h4>
+            <ul class="benefit-list">
+                <li>Set up database connection parameters in .env</li>
+                <li>Configure SSL certificates path</li>
+                <li>Set session timeout and refresh intervals</li>
+                <li>Create default user accounts</li>
+                <li>Customize dashboard appearance (optional)</li>
+            </ul>
+        </section>
+
+        <!-- Advanced Features -->
+        <section>
+            <h2 class="section-title"><i class="bi bi-rocket"></i> Advanced Features</h2>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;">Real-Time WebSocket Updates</h4>
+            <p>
+                The dashboard uses Socket.IO for real-time bidirectional communication. Metrics update instantly without page refreshes, providing a seamless monitoring experience.
+            </p>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;">Responsive Design</h4>
+            <p>
+                Built with Bootstrap 5, the dashboard adapts beautifully to any screen size. Monitor your database from desktops, tablets, or mobile devices.
+            </p>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;">Custom Queries</h4>
+            <p>
+                Execute any SQL query with the integrated SQL executor. Test queries before deploying them to production with built-in explain plan generation.
+            </p>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;">Data Export</h4>
+            <p>
+                Export query results and reports in CSV or JSON format for analysis in Excel, Power BI, or other business intelligence tools.
+            </p>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;">Backup Integration</h4>
+            <p>
+                Integrated backup tools allow you to create and manage database backups directly from the dashboard, simplifying disaster recovery operations.
+            </p>
+        </section>
+
+        <!-- Metrics Reference -->
+        <section>
+            <h2 class="section-title"><i class="bi bi-book"></i> Key Metrics Reference</h2>
+
+            <div class="table-responsive" style="margin: 30px 0;">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Description</th>
+                            <th>What It Tells You</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>User Commits</strong></td>
+                            <td>Number of user-initiated commit operations</td>
+                            <td>Transaction frequency and workload intensity</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Physical Reads</strong></td>
+                            <td>Disk I/O reads from storage</td>
+                            <td>Whether data is cached or retrieved from disk</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Physical Writes</strong></td>
+                            <td>Disk I/O writes to storage</td>
+                            <td>Redo log and data file write activity</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Redo Size</strong></td>
+                            <td>Amount of redo log data generated</td>
+                            <td>Transaction volume and logging activity</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Wait Events</strong></td>
+                            <td>Events database processes are waiting for</td>
+                            <td>Performance bottlenecks and resource constraints</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Buffer Cache Hit %</strong></td>
+                            <td>Percentage of reads from memory vs disk</td>
+                            <td>Cache effectiveness (target: >90%)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Performance Tips -->
+        <section>
+            <h2 class="section-title"><i class="bi bi-lightbulb"></i> Performance Tips</h2>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;">Interpreting Wait Events</h4>
+            <ul class="benefit-list">
+                <li>High "db file sequential read" = Missing indexes</li>
+                <li>High "db file scattered read" = Full table scans</li>
+                <li>High "log file sync" = Redo log I/O bottleneck</li>
+                <li>High "latch free" = Contention for internal structures</li>
+                <li>High "lock" = Concurrent access issues</li>
+            </ul>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;">Optimization Strategies</h4>
+            <ul class="benefit-list">
+                <li>Review top SQL statements regularly for optimization opportunities</li>
+                <li>Use explain plans to identify inefficient query execution</li>
+                <li>Monitor session activity and kill long-running blocking sessions</li>
+                <li>Maintain adequate tablespace capacity with growth trending</li>
+                <li>Analyze wait events to focus tuning efforts on actual bottlenecks</li>
+            </ul>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;">Best Practices</h4>
+            <ul class="benefit-list">
+                <li>Review dashboard metrics daily for production databases</li>
+                <li>Set up alerts for critical thresholds (high CPU, full tablespaces, etc.)</li>
+                <li>Archive historical data regularly to maintain dashboard performance</li>
+                <li>Document configuration changes for audit and troubleshooting</li>
+                <li>Keep database and dashboard software updated for security patches</li>
+            </ul>
+        </section>
+
+        <!-- Support & Resources -->
+        <section>
+            <h2 class="section-title"><i class="bi bi-question-circle"></i> Support & Resources</h2>
+
+            <div class="highlight">
+                <strong>💡 Need Help?</strong>
+                <p style="margin-bottom: 0; margin-top: 10px;">
+                    This comprehensive dashboard comes with detailed documentation, built-in help tooltips, and example queries to help you get the most out of your Oracle monitoring experience.
+                </p>
+            </div>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;">Documentation</h4>
+            <ul class="benefit-list">
+                <li>Inline tooltips for all features and metrics</li>
+                <li>Sample SQL queries for common tasks</li>
+                <li>Troubleshooting guide for common issues</li>
+                <li>Performance tuning recommendations</li>
+            </ul>
+
+            <h4 style="color: #667eea; margin: 30px 0 15px 0;">Keyboard Shortcuts</h4>
+            <ul class="benefit-list">
+                <li><strong>Ctrl+Enter:</strong> Execute SQL query</li>
+                <li><strong>Ctrl+K:</strong> Clear query results</li>
+                <li><strong>F5:</strong> Refresh all metrics</li>
+            </ul>
+        </section>
+
+        <!-- Conclusion -->
+        <section>
+            <h2 class="section-title"><i class="bi bi-check-circle"></i> Conclusion</h2>
+            <p>
+                The <strong>Oracle Database Monitoring Dashboard</strong> represents the next generation of database administration tools. By combining powerful monitoring capabilities, intuitive user interface, and enterprise-grade security, it empowers database administrators to manage their Oracle infrastructure more effectively than ever before.
+            </p>
+            <p>
+                Whether you're optimizing slow queries, managing storage capacity, troubleshooting performance issues, or simply maintaining database health, this dashboard provides the visibility and tools you need to succeed. Its real-time monitoring, comprehensive metrics, and powerful analysis capabilities make it an indispensable tool for any organization running Oracle Database in production.
+            </p>
+            <p>
+                Start using the Oracle Database Monitoring Dashboard today and experience the difference that professional-grade database monitoring can make.
+            </p>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer-section">
+        <div class="content-wrapper text-center">
+            <h3 style="margin-bottom: 30px; color: #333;">About the Creator</h3>
+            
+            <div style="margin-bottom: 40px;">
+                <h4 style="color: #667eea; margin-bottom: 15px;">
+                    <i class="bi bi-person-circle"></i> M-AWAIS
+                </h4>
+                <p style="color: #666; max-width: 600px; margin: 0 auto; margin-bottom: 20px;">
+                    A passionate software engineer and database enthusiast dedicated to building enterprise-grade tools that make database administration easier and more efficient. With years of experience in Oracle Database architecture and performance tuning, M-AWAIS created this dashboard to solve real-world database monitoring challenges.
+                </p>
+                <div>
+                    <span class="creator-badge">
+                        <i class="bi bi-hammer"></i> Software Engineer
+                    </span>
+                    <span class="creator-badge">
+                        <i class="bi bi-database"></i> Oracle DBA
+                    </span>
+                    <span class="creator-badge">
+                        <i class="bi bi-gear"></i> DevOps Specialist
+                    </span>
+                </div>
+            </div>
+
+            <hr style="margin: 40px 0;">
+
+            <div>
+                <h5 style="color: #333; margin-bottom: 20px;">Oracle Database Monitoring Dashboard</h5>
+                <p style="color: #666; margin-bottom: 20px;">
+                    Version 1.0.0 | Created by <strong>M-AWAIS</strong> | <span id="year"></span>
+                </p>
+                <p style="color: #999; font-size: 0.9rem; margin-bottom: 10px;">
+                    Enterprise-Grade Database Monitoring for Oracle Database
+                </p>
+                <p style="color: #999; font-size: 0.85rem;">
+                    © <span id="copyright-year"></span> M-AWAIS. All rights reserved.<br>
+                    Built with passion for database excellence.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Set current year in multiple places
+        const currentYear = new Date().getFullYear();
+        document.getElementById('current-year').textContent = currentYear;
+        document.getElementById('year').textContent = currentYear;
+        document.getElementById('copyright-year').textContent = currentYear;
+        
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

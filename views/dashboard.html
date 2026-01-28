@@ -1,0 +1,340 @@
+<!-- views/dashboard.ejs -->
+<%- include('layout', { 
+    title: 'Dashboard',
+    currentPage: 'dashboard',
+    user: user 
+}); %>
+
+<div class="row">
+    <!-- Health Status Cards -->
+    <div class="col-12">
+        <div class="row" id="health-cards">
+            <!-- Dynamic health cards will be inserted here -->
+        </div>
+    </div>
+    
+    <!-- Performance Charts -->
+    <div class="col-md-8">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-graph-up"></i> System Performance
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="performanceChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-pie-chart"></i> Session Distribution
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="sessionChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top Tablespaces -->
+    <div class="col-12">
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-hdd"></i> Top Tablespaces by Usage
+                </h5>
+                <a href="/storage" class="btn btn-sm btn-outline-primary">
+                    View All <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="tablespaceTable">
+                        <thead>
+                            <tr>
+                                <th>Tablespace</th>
+                                <th>Used %</th>
+                                <th>Used (MB)</th>
+                                <th>Free (MB)</th>
+                                <th>Total (MB)</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Dynamic content -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Active Sessions -->
+    <div class="col-12">
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-people"></i> Active Sessions
+                </h5>
+                <div>
+                    <span class="badge bg-danger me-2" id="active-sessions-count">0</span>
+                    <a href="/sessions" class="btn btn-sm btn-outline-primary">
+                        View All <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="sessionsTable">
+                        <thead>
+                            <tr>
+                                <th>SID</th>
+                                <th>Username</th>
+                                <th>Program</th>
+                                <th>Event</th>
+                                <th>Last Call (s)</th>
+                                <th>SQL Text</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Dynamic content -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Performance Chart
+let performanceChart;
+let sessionChart;
+
+function initCharts() {
+    const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+    performanceChart = new Chart(performanceCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'User Commits/sec',
+                data: [],
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }, {
+                label: 'Physical Reads/sec',
+                data: [],
+                borderColor: 'rgb(255, 99, 132)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    const sessionCtx = document.getElementById('sessionChart').getContext('2d');
+    sessionChart = new Chart(sessionCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Active', 'Inactive', 'Background'],
+            datasets: [{
+                data: [0, 0, 0],
+                backgroundColor: [
+                    'rgb(255, 99, 132)',
+                    'rgb(54, 162, 235)',
+                    'rgb(255, 205, 86)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right'
+                }
+            }
+        }
+    });
+}
+
+function updateCharts(data) {
+    // Update performance chart
+    if (data.performance && data.performance.systemStats) {
+        const timeLabel = new Date(data.timestamp).toLocaleTimeString();
+        
+        // Add new data point
+        performanceChart.data.labels.push(timeLabel);
+        if (performanceChart.data.labels.length > 20) {
+            performanceChart.data.labels.shift();
+        }
+        
+        // Find relevant metrics
+        const commits = data.performance.systemStats.find(s => s.STAT_NAME === 'user commits')?.VALUE || 0;
+        const reads = data.performance.systemStats.find(s => s.STAT_NAME === 'physical reads')?.VALUE || 0;
+        
+        performanceChart.data.datasets[0].data.push(commits);
+        performanceChart.data.datasets[1].data.push(reads);
+        
+        if (performanceChart.data.datasets[0].data.length > 20) {
+            performanceChart.data.datasets[0].data.shift();
+            performanceChart.data.datasets[1].data.shift();
+        }
+        
+        performanceChart.update();
+    }
+    
+    // Update session chart
+    if (data.performance && data.performance.sessionInfo) {
+        const sessionInfo = data.performance.sessionInfo;
+        sessionChart.data.datasets[0].data = [
+            sessionInfo.ACTIVE_SESSIONS || 0,
+            (sessionInfo.TOTAL_SESSIONS - sessionInfo.ACTIVE_SESSIONS - sessionInfo.BACKGROUND_SESSIONS) || 0,
+            sessionInfo.BACKGROUND_SESSIONS || 0
+        ];
+        sessionChart.update();
+    }
+    
+    // Update health cards
+    updateHealthCards(data.healthChecks);
+    
+    // Update tablespace table
+    updateTablespaceTable(data.tablespaces);
+    
+    // Update sessions table
+    updateSessionsTable(data.activeSessions);
+}
+
+function updateHealthCards(healthChecks) {
+    const container = document.getElementById('health-cards');
+    let html = '';
+    
+    healthChecks.forEach(check => {
+        const statusClass = check.status === 'OK' ? 'success' : 
+                           check.status === 'WARNING' ? 'warning' : 'danger';
+        
+        html += `
+            <div class="col-md-4 mb-3">
+                <div class="card border-${statusClass}">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">${check.name}</h5>
+                            <span class="badge bg-${statusClass}">${check.status}</span>
+                        </div>
+                        <p class="card-text mt-2">${check.message}</p>
+                        ${check.details && check.details.length > 0 ? 
+                            `<small class="text-muted">${check.details.join(', ')}</small>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+function updateTablespaceTable(tablespaces) {
+    const tbody = document.querySelector('#tablespaceTable tbody');
+    let html = '';
+    
+    tablespaces.slice(0, 5).forEach(ts => {
+        const statusClass = ts.USED_PCT > 90 ? 'danger' : 
+                           ts.USED_PCT > 80 ? 'warning' : 'success';
+        
+        html += `
+            <tr>
+                <td>${ts.TABLESPACE_NAME}</td>
+                <td>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-${statusClass}" 
+                             role="progressbar" 
+                             style="width: ${ts.USED_PCT}%">
+                            ${ts.USED_PCT}%
+                        </div>
+                    </div>
+                </td>
+                <td>${ts.USED_MB.toFixed(2)}</td>
+                <td>${ts.FREE_MB.toFixed(2)}</td>
+                <td>${ts.TOTAL_MB.toFixed(2)}</td>
+                <td>
+                    <span class="badge bg-${statusClass}">
+                        ${ts.USED_PCT > 90 ? 'CRITICAL' : 
+                          ts.USED_PCT > 80 ? 'WARNING' : 'NORMAL'}
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-outline-info" 
+                            onclick="showTablespaceDetails('${ts.TABLESPACE_NAME}')">
+                        <i class="bi bi-info-circle"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html;
+}
+
+function updateSessionsTable(sessions) {
+    const tbody = document.querySelector('#sessionsTable tbody');
+    const countElement = document.getElementById('active-sessions-count');
+    let html = '';
+    
+    const activeSessions = sessions.filter(s => s.STATUS === 'ACTIVE');
+    countElement.textContent = activeSessions.length;
+    
+    activeSessions.slice(0, 5).forEach(session => {
+        const lastCallClass = session.LAST_CALL_SECONDS > 3600 ? 'danger' : 
+                             session.LAST_CALL_SECONDS > 600 ? 'warning' : 'success';
+        
+        html += `
+            <tr>
+                <td>${session.SID}</td>
+                <td>${session.USERNAME || 'N/A'}</td>
+                <td><small>${session.PROGRAM || 'N/A'}</small></td>
+                <td><small>${session.EVENT || 'N/A'}</small></td>
+                <td>
+                    <span class="badge bg-${lastCallClass}">
+                        ${session.LAST_CALL_SECONDS}s
+                    </span>
+                </td>
+                <td><small>${(session.SQL_TEXT || '').substring(0, 50)}...</small></td>
+                <td>
+                    <button class="btn btn-sm btn-outline-danger" 
+                            onclick="killSession(${session.SID}, ${session.SERIAL})">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-info" 
+                            onclick="showSessionDetails(${session.SID}, ${session.SERIAL})">
+                        <i class="bi bi-info-circle"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html;
+}
+
+// Initialize charts on page load
+document.addEventListener('DOMContentLoaded', initCharts);
+</script>
